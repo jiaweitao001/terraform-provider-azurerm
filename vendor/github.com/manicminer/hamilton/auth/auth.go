@@ -25,6 +25,8 @@ type Authorizer interface {
 // Authorizers are selected for authentication methods in the following preferential order:
 // - Client certificate authentication
 // - Client secret authentication
+// - GitHub OIDC authentication
+// - MSI authentication
 // - Azure CLI authentication
 //
 // Whether one of these is returned depends on whether it is enabled in the Config, and whether sufficient
@@ -32,6 +34,7 @@ type Authorizer interface {
 //
 // For client certificate authentication, specify TenantID, ClientID and ClientCertData / ClientCertPath.
 // For client secret authentication, specify TenantID, ClientID and ClientSecret.
+// For GitHub OIDC authentication, specify TenantID, ClientID, IDTokenRequestURL and IDTokenRequestToken.
 // MSI authentication (if enabled) using the Azure Metadata Service is then attempted
 // Azure CLI authentication (if enabled) is attempted last
 //
@@ -53,6 +56,16 @@ func (c *Config) NewAuthorizer(ctx context.Context, api environments.Api) (Autho
 		a, err := NewClientSecretAuthorizer(ctx, c.Environment, api, c.Version, c.TenantID, c.AuxiliaryTenantIDs, c.ClientID, c.ClientSecret)
 		if err != nil {
 			return nil, fmt.Errorf("could not configure ClientCertificate Authorizer: %s", err)
+		}
+		if a != nil {
+			return a, nil
+		}
+	}
+
+	if c.EnableGitHubOIDCAuth {
+		a, err := NewGitHubOIDCAuthorizer(context.Background(), c.Environment, api, c.TenantID, c.AuxiliaryTenantIDs, c.ClientID, c.IDTokenRequestURL, c.IDTokenRequestToken)
+		if err != nil {
+			return nil, fmt.Errorf("could not configure GitHubOIDC Authorizer: %s", err)
 		}
 		if a != nil {
 			return a, nil
@@ -154,6 +167,21 @@ func NewClientSecretAuthorizer(ctx context.Context, environment environments.Env
 	}
 
 	return conf.TokenSource(ctx, ClientCredentialsSecretType), nil
+}
+
+// NewGitHubOIDCAuthorizer returns an authorizer which acquires a client assertion from a GitHub endpoint, then uses client assertion authentication to obtain an access token.
+func NewGitHubOIDCAuthorizer(ctx context.Context, environment environments.Environment, api environments.Api, tenantId string, auxTenantIds []string, clientId, idTokenRequestUrl, idTokenRequestToken string) (Authorizer, error) {
+	conf := GitHubOIDCConfig{
+		Environment:         environment,
+		TenantID:            tenantId,
+		AuxiliaryTenantIDs:  auxTenantIds,
+		ClientID:            clientId,
+		IDTokenRequestURL:   idTokenRequestUrl,
+		IDTokenRequestToken: idTokenRequestToken,
+		Scopes:              []string{api.DefaultScope()},
+	}
+
+	return conf.TokenSource(ctx), nil
 }
 
 func TokenEndpoint(endpoint environments.AzureADEndpoint, tenant string, version TokenVersion) (e string) {

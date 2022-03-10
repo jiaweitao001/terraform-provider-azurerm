@@ -63,10 +63,17 @@ func resourceMsSqlDatabase() *pluginsdk.Resource {
 				if !features.ThreePointOhBeta() {
 					return nil
 				}
+				transparentDataEncryption := d.Get("transparent_data_encryption_enabled").(bool)
 				sku := d.Get("sku_name").(string)
-				if !strings.HasPrefix(sku, "DW") && !d.Get("transparent_data_encryption_enabled").(bool) {
+				if !strings.HasPrefix(sku, "DW") && !transparentDataEncryption {
 					return fmt.Errorf("transparent data encryption can only be disabled on Data Warehouse SKUs")
 				}
+
+				createMode := d.Get("create_mode").(string)
+				if (createMode == string(sql.CreateModeSecondary) || createMode == string(sql.CreateModeOnlineSecondary)) && transparentDataEncryption {
+					return fmt.Errorf("transparent data encryption must be disabled for secondary databases")
+				}
+
 				return nil
 			}),
 	}
