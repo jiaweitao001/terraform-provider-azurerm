@@ -178,6 +178,8 @@ resource "azurerm_stream_analytics_job" "test" {
   events_out_of_order_max_delay_in_seconds = 50
   events_out_of_order_policy               = "Adjust"
   output_error_policy                      = "Drop"
+  output_start_mode						   = "JobStartTime"
+  output_start_time						   = "2022-03-15T06:08:02+00:00"
   streaming_units                          = 3
   stream_analytics_cluster_id              = azurerm_stream_analytics_cluster.test.id
   tags = {
@@ -237,6 +239,8 @@ resource "azurerm_stream_analytics_job" "test" {
   events_out_of_order_max_delay_in_seconds = 20
   events_out_of_order_policy               = "Drop"
   output_error_policy                      = "Stop"
+  output_start_mode 					   = "JobStartTime"
+  output_start_time						   = "2022-03-15T06:08:02+00:00"
   streaming_units                          = 6
 
   transformation_query = <<QUERY

@@ -2,6 +2,7 @@ package streamanalytics
 
 import (
 	"fmt"
+	"github.com/Azure/go-autorest/autorest/date"
 	"log"
 	"time"
 
@@ -123,6 +124,22 @@ func resourceStreamAnalyticsJob() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
+			"output_start_mode": {
+				Type:     pluginsdk.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(streamanalytics.JobStartTime),
+					string(streamanalytics.CustomTime),
+					string(streamanalytics.LastOutputEventTime),
+				}, false),
+			},
+
+			"output_start_time": {
+				Type:         pluginsdk.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsRFC3339Time,
+			},
+
 			"identity": commonschema.SystemAssignedIdentityOptional(),
 
 			"job_id": {
@@ -167,6 +184,7 @@ func resourceStreamAnalyticsJobCreateUpdate(d *pluginsdk.ResourceData, meta inte
 	outputErrorPolicy := d.Get("output_error_policy").(string)
 	streamingUnits := d.Get("streaming_units").(int)
 	transformationQuery := d.Get("transformation_query").(string)
+	outputStartMode := d.Get("output_start_mode").(string)
 	t := d.Get("tags").(map[string]interface{})
 
 	// needs to be defined inline for a Create but via a separate API for Update
@@ -195,6 +213,7 @@ func resourceStreamAnalyticsJobCreateUpdate(d *pluginsdk.ResourceData, meta inte
 			EventsOutOfOrderMaxDelayInSeconds:  utils.Int32(int32(eventsOutOfOrderMaxDelayInSeconds)),
 			EventsOutOfOrderPolicy:             streamanalytics.EventsOutOfOrderPolicy(eventsOutOfOrderPolicy),
 			OutputErrorPolicy:                  streamanalytics.OutputErrorPolicy(outputErrorPolicy),
+			OutputStartMode:                    streamanalytics.OutputStartMode(outputStartMode),
 		},
 		Identity: expandedIdentity,
 		Tags:     tags.Expand(t),
@@ -212,6 +231,18 @@ func resourceStreamAnalyticsJobCreateUpdate(d *pluginsdk.ResourceData, meta inte
 
 	if dataLocale, ok := d.GetOk("data_locale"); ok {
 		props.StreamingJobProperties.DataLocale = utils.String(dataLocale.(string))
+	}
+
+	if v, ok := d.GetOk("output_start_time"); ok {
+		outputStartTimeString := v.(string)
+		outputStartTime, err := date.ParseTime(time.RFC3339, outputStartTimeString)
+		if err != nil {
+			return fmt.Errorf("`output_start_time` wasn't a valid RFC3339 date #{outputStartTimeString}: #{err}")
+		}
+
+		props.OutputStartTime = &date.Time{
+			Time: outputStartTime,
+		}
 	}
 
 	if d.IsNewResource() {
@@ -302,6 +333,11 @@ func resourceStreamAnalyticsJobRead(d *pluginsdk.ResourceData, meta interface{})
 				d.Set("streaming_units", int(*units))
 			}
 			d.Set("transformation_query", transformation.Query)
+		}
+
+		d.Set("output_start_mode", string(props.OutputStartMode))
+		if outputStartTime := props.OutputStartTime; outputStartTime != nil {
+			d.Set("output_start_time", outputStartTime.String())
 		}
 	}
 
