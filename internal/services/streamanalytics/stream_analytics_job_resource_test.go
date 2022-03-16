@@ -239,8 +239,6 @@ resource "azurerm_stream_analytics_job" "test" {
   events_out_of_order_max_delay_in_seconds = 20
   events_out_of_order_policy               = "Drop"
   output_error_policy                      = "Stop"
-  output_start_mode 					   = "JobStartTime"
-  output_start_time						   = "2022-03-15T06:08:02+00:00"
   streaming_units                          = 6
 
   transformation_query = <<QUERY
