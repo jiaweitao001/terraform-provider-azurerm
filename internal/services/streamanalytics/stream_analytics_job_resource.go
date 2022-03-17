@@ -335,7 +335,6 @@ func resourceStreamAnalyticsJobRead(d *pluginsdk.ResourceData, meta interface{})
 			d.Set("transformation_query", transformation.Query)
 		}
 
-		log.Printf("[WARN] The output start mode is: %s", string(props.OutputStartMode))
 		d.Set("output_start_mode", string(props.OutputStartMode))
 		if outputStartTime := props.OutputStartTime; outputStartTime != nil {
 			d.Set("output_start_time", outputStartTime.String())
