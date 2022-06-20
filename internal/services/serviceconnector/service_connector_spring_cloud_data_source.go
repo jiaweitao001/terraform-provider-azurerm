@@ -9,41 +9,41 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/serviceconnector/sdk/2022-05-01/servicelinker"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
+	validate "github.com/hashicorp/terraform-provider-azurerm/internal/services/springcloud/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
 
-type AppServiceConnectorDataSource struct{}
+type SpringCloudConnectorDataSource struct{}
 
-type AppServiceConnectorDataSourceModel struct {
+type SpringCloudConnectorDataSourceModel struct {
 	Name             string          `tfschema:"name"`
-	AppServiceId     string          `tfschema:"app_service_id"`
+	SpringCloudId    string          `tfschema:"spring_cloud_id"`
 	TargetResourceId string          `tfschema:"target_resource_id"`
 	ClientType       string          `tfschema:"client_type"`
 	AuthInfo         []AuthInfoModel `tfschema:"auth_info"`
 	VnetSolution     string          `tfschema:"vnet_solution"`
 }
 
-var _ sdk.DataSource = AppServiceConnectorDataSource{}
+var _ sdk.DataSource = SpringCloudConnectorDataSource{}
 
-func (r AppServiceConnectorDataSource) Arguments() map[string]*schema.Schema {
-	return map[string]*pluginsdk.Schema{
+func (r SpringCloudConnectorDataSource) Arguments() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
 		"name": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
-		"app_service_id": {
+		"spring_cloud_id": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
-			ValidateFunc: validate.AppServiceID,
+			ValidateFunc: validate.SpringCloudDeploymentID,
 		},
 	}
 }
 
-func (r AppServiceConnectorDataSource) Attributes() map[string]*schema.Schema {
+func (r SpringCloudConnectorDataSource) Attributes() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"target_resource_id": {
 			Type:     pluginsdk.TypeString,
@@ -64,26 +64,26 @@ func (r AppServiceConnectorDataSource) Attributes() map[string]*schema.Schema {
 	}
 }
 
-func (r AppServiceConnectorDataSource) ModelObject() interface{} {
-	return &AppServiceConnectorDataSourceModel{}
+func (r SpringCloudConnectorDataSource) ModelObject() interface{} {
+	return &SpringCloudConnectorDataSourceModel{}
 }
 
-func (r AppServiceConnectorDataSource) ResourceType() string {
-	return "azurerm_app_service_connection"
+func (r SpringCloudConnectorDataSource) ResourceType() string {
+	return "azurerm_spring_cloud_connection"
 }
 
-func (r AppServiceConnectorDataSource) Read() sdk.ResourceFunc {
+func (r SpringCloudConnectorDataSource) Read() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.ServiceConnector.ServiceLinkerClient
 
-			var serviceConnector AppServiceConnectorDataSourceModel
+			var serviceConnector SpringCloudConnectorDataSourceModel
 			if err := metadata.Decode(&serviceConnector); err != nil {
 				return err
 			}
 
-			id := servicelinker.NewScopedLinkerID(serviceConnector.AppServiceId, serviceConnector.Name)
+			id := servicelinker.NewScopedLinkerID(serviceConnector.SpringCloudId, serviceConnector.Name)
 
 			existing, err := client.LinkerGet(ctx, id)
 			if err != nil {
@@ -102,9 +102,9 @@ func (r AppServiceConnectorDataSource) Read() sdk.ResourceFunc {
 					return fmt.Errorf("reading target service for service connector %s", id)
 				}
 
-				state := AppServiceConnectorDataSourceModel{
+				state := SpringCloudConnectorDataSourceModel{
 					Name:             id.LinkerName,
-					AppServiceId:     id.ResourceUri,
+					SpringCloudId:    id.ResourceUri,
 					TargetResourceId: flattenTargetService(props.TargetService),
 					AuthInfo:         flattenServiceConnectorAuthInfo(props.AuthInfo),
 				}

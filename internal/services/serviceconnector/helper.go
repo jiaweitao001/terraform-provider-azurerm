@@ -82,6 +82,53 @@ func authInfoSchema() *pluginsdk.Schema {
 	}
 }
 
+func authInfoSchemaComputed() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeSet,
+		Computed: true,
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*schema.Schema{
+				"type": {
+					Type:     pluginsdk.TypeString,
+					Computed: true,
+				},
+
+				"name": {
+					Type:     pluginsdk.TypeString,
+					Computed: true,
+				},
+
+				"secret": {
+					Type:      pluginsdk.TypeString,
+					Computed:  true,
+					Sensitive: true,
+				},
+
+				"client_id": {
+					Type:     pluginsdk.TypeString,
+					Computed: true,
+				},
+
+				"subscription_id": {
+					Type:     pluginsdk.TypeString,
+					Computed: true,
+				},
+
+				"principal_id": {
+					Type:     pluginsdk.TypeString,
+					Computed: true,
+				},
+
+				"certificate": {
+					Type:      pluginsdk.TypeString,
+					Computed:  true,
+					Sensitive: true,
+				},
+			},
+		},
+	}
+}
+
 func expandServiceConnectorAuthInfo(input []AuthInfoModel) (servicelinker.AuthInfoBase, error) {
 	if len(input) == 0 {
 		return nil, fmt.Errorf("auth_info should be defined")
