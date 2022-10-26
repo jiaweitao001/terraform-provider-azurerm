@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/clusters"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/hosts"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-type ClusterResource struct{}
+type HostResource struct{}
 
-var _ sdk.ResourceWithUpdate = ClusterResource{}
+var _ sdk.ResourceWithUpdate = HostResource{}
 
-type ClusterResourceModel struct {
+type HostResourceModel struct {
 	Name             string                `tfschema:"name"`
 	ResourceGroup    string                `tfschema:"resource_group_name"`
 	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
@@ -29,12 +29,7 @@ type ClusterResourceModel struct {
 	Tags             map[string]string     `tfschema:"tags"`
 }
 
-type ExtendedLocationModel struct {
-	Name string `tfschema:"name"`
-	Type string `tfschema:"type"`
-}
-
-func (r ClusterResource) Arguments() map[string]*schema.Schema {
+func (r HostResource) Arguments() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"name": {
 			Type:         pluginsdk.TypeString,
@@ -103,31 +98,31 @@ func (r ClusterResource) Arguments() map[string]*schema.Schema {
 	}
 }
 
-func (r ClusterResource) Attributes() map[string]*schema.Schema {
+func (r HostResource) Attributes() map[string]*schema.Schema {
 	return map[string]*schema.Schema{}
 }
 
-func (r ClusterResource) ModelObject() interface{} {
-	return ClusterResource{}
+func (r HostResource) ModelObject() interface{} {
+	return HostResource{}
 }
 
-func (r ClusterResource) ResourceType() string {
-	return "azurerm_connected_vmware_cluster"
+func (r HostResource) ResourceType() string {
+	return "azurerm_connected_vmware_host"
 }
 
-func (r ClusterResource) Create() sdk.ResourceFunc {
+func (r HostResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			var model ClusterResourceModel
+			var model HostResourceModel
 			if err := metadata.Decode(&model); err != nil {
 				return err
 			}
 
-			client := metadata.Client.ConnectedVmware.ClusterClient
+			client := metadata.Client.ConnectedVmware.HostClient
 			subscriptionId := metadata.Client.Account.SubscriptionId
 
-			id := clusters.NewClusterID(subscriptionId, model.ResourceGroup, model.Name)
+			id := hosts.NewHostID(subscriptionId, model.ResourceGroup, model.Name)
 
 			existing, err := client.Get(ctx, id)
 			if err != nil && !response.WasNotFound(existing.HttpResponse) {
@@ -138,14 +133,14 @@ func (r ClusterResource) Create() sdk.ResourceFunc {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			props := clusters.ClusterProperties{
+			props := hosts.HostProperties{
 				InventoryItemId: &model.InventoryItemId,
 				MoRefId:         &model.MoRefId,
 				VCenterId:       &model.VCenterId,
 			}
 
-			cluster := clusters.Cluster{
-				ExtendedLocation: &clusters.ExtendedLocation{
+			host := hosts.Host{
+				ExtendedLocation: &hosts.ExtendedLocation{
 					Name: &model.ExtendedLocation.Name,
 					Type: &model.ExtendedLocation.Type,
 				},
@@ -153,9 +148,9 @@ func (r ClusterResource) Create() sdk.ResourceFunc {
 				Location: model.Location,
 				Tags:     &model.Tags,
 			}
-			cluster.Properties = props
+			host.Properties = props
 
-			if _, err := client.Create(ctx, id, cluster); err != nil {
+			if _, err := client.Create(ctx, id, host); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -165,13 +160,13 @@ func (r ClusterResource) Create() sdk.ResourceFunc {
 	}
 }
 
-func (r ClusterResource) Read() sdk.ResourceFunc {
+func (r HostResource) Read() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.ClusterClient
+			client := metadata.Client.ConnectedVmware.HostClient
 
-			id, err := clusters.ParseClusterID(metadata.ResourceData.Id())
+			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -187,8 +182,8 @@ func (r ClusterResource) Read() sdk.ResourceFunc {
 			if model := resp.Model; model != nil {
 				props := model.Properties
 
-				state := ClusterResourceModel{
-					Name:          id.ClusterName,
+				state := HostResourceModel{
+					Name:          id.HostName,
 					ResourceGroup: id.ResourceGroupName,
 					Location:      model.Location,
 				}
@@ -227,19 +222,19 @@ func (r ClusterResource) Read() sdk.ResourceFunc {
 	}
 }
 
-func (r ClusterResource) Delete() sdk.ResourceFunc {
+func (r HostResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.ClusterClient
-			id, err := clusters.ParseClusterID(metadata.ResourceData.Id())
+			client := metadata.Client.ConnectedVmware.HostClient
+			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
 			metadata.Logger.Infof("deleting %s", *id)
 
-			if resp, err := client.Delete(ctx, *id, clusters.DefaultDeleteOperationOptions()); err != nil {
+			if resp, err := client.Delete(ctx, *id, hosts.DefaultDeleteOperationOptions()); err != nil {
 				if !response.WasNotFound(resp.HttpResponse) {
 					return fmt.Errorf("deleting %s: %+v", *id, err)
 				}
@@ -249,21 +244,21 @@ func (r ClusterResource) Delete() sdk.ResourceFunc {
 	}
 }
 
-func (r ClusterResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return clusters.ValidateClusterID
+func (r HostResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
+	return hosts.ValidateHostID
 }
 
-func (r ClusterResource) Update() sdk.ResourceFunc {
+func (r HostResource) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.ClusterClient
-			id, err := clusters.ParseClusterID(metadata.ResourceData.Id())
+			client := metadata.Client.ConnectedVmware.HostClient
+			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			var state ClusterResourceModel
+			var state HostResourceModel
 			if err := metadata.Decode(&state); err != nil {
 				return fmt.Errorf("decoding %+v", err)
 			}
@@ -283,7 +278,7 @@ func (r ClusterResource) Update() sdk.ResourceFunc {
 				//	Tags: &state.Tags,
 				//}
 
-				patch := clusters.ResourcePatch{
+				patch := hosts.ResourcePatch{
 					Tags: &state.Tags,
 				}
 				if _, err := client.Update(ctx, *id, patch); err != nil {
