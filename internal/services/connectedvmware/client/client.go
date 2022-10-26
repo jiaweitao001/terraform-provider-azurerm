@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/clusters"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/datastores"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/hosts"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/inventoryitems"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/vcenters"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
@@ -13,6 +14,7 @@ type Client struct {
 	InventoryItemsClient *inventoryitems.InventoryItemsClient
 	DataStoresClient     *datastores.DataStoresClient
 	VcenterClient        *vcenters.VCentersClient
+	HostClient           *hosts.HostsClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
@@ -25,9 +27,13 @@ func NewClient(o *common.ClientOptions) *Client {
 	vcenterClient := vcenters.NewVCentersClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&vcenterClient.Client, o.ResourceManagerAuthorizer)
 
+	hostClient := hosts.NewHostsClientWithBaseURI(o.ResourceManagerEndpoint)
+	o.ConfigureClient(&hostClient.Client, o.ResourceManagerAuthorizer)
+
 	return &Client{
 		ClusterClient:        &clusterClient,
 		InventoryItemsClient: &inventoryItemsClient,
 		VcenterClient:        &vcenterClient,
+		HostClient:           &hostClient,
 	}
 }
