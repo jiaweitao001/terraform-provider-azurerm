@@ -4,34 +4,34 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/hosts"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/resourcepools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"time"
 )
 
-type HostResource struct{}
+type ResourcepoolResource struct{}
 
-var _ sdk.ResourceWithUpdate = HostResource{}
+var _ sdk.ResourceWithUpdate = ResourcepoolResource{}
 
-func (r HostResource) Arguments() map[string]*schema.Schema {
+func (r ResourcepoolResource) Arguments() map[string]*schema.Schema {
 	return ConnectedVmwareResourceCommonSchema()
 }
 
-func (r HostResource) Attributes() map[string]*schema.Schema {
+func (r ResourcepoolResource) Attributes() map[string]*schema.Schema {
 	return map[string]*schema.Schema{}
 }
 
-func (r HostResource) ModelObject() interface{} {
-	return HostResource{}
+func (r ResourcepoolResource) ModelObject() interface{} {
+	return ResourcepoolResource{}
 }
 
-func (r HostResource) ResourceType() string {
-	return "azurerm_connected_vmware_host"
+func (r ResourcepoolResource) ResourceType() string {
+	return "azurerm_connected_vmware_resourcepool"
 }
 
-func (r HostResource) Create() sdk.ResourceFunc {
+func (r ResourcepoolResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
@@ -40,10 +40,10 @@ func (r HostResource) Create() sdk.ResourceFunc {
 				return err
 			}
 
-			client := metadata.Client.ConnectedVmware.HostClient
+			client := metadata.Client.ConnectedVmware.ResourcepoolClient
 			subscriptionId := metadata.Client.Account.SubscriptionId
 
-			id := hosts.NewHostID(subscriptionId, model.ResourceGroup, model.Name)
+			id := resourcepools.NewResourcePoolID(subscriptionId, model.ResourceGroup, model.Name)
 
 			existing, err := client.Get(ctx, id)
 			if err != nil && !response.WasNotFound(existing.HttpResponse) {
@@ -54,14 +54,14 @@ func (r HostResource) Create() sdk.ResourceFunc {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			props := hosts.HostProperties{
+			props := resourcepools.ResourcePoolProperties{
 				InventoryItemId: &model.InventoryItemId,
 				MoRefId:         &model.MoRefId,
 				VCenterId:       &model.VCenterId,
 			}
 
-			host := hosts.Host{
-				ExtendedLocation: &hosts.ExtendedLocation{
+			resourcepool := resourcepools.ResourcePool{
+				ExtendedLocation: &resourcepools.ExtendedLocation{
 					Name: &model.ExtendedLocation.Name,
 					Type: &model.ExtendedLocation.Type,
 				},
@@ -69,25 +69,26 @@ func (r HostResource) Create() sdk.ResourceFunc {
 				Location: model.Location,
 				Tags:     &model.Tags,
 			}
-			host.Properties = props
+			resourcepool.Properties = props
 
-			if _, err := client.Create(ctx, id, host); err != nil {
+			if _, err := client.Create(ctx, id, resourcepool); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
 			metadata.SetID(id)
 			return nil
+
 		},
 	}
 }
 
-func (r HostResource) Read() sdk.ResourceFunc {
+func (r ResourcepoolResource) Read() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.HostClient
+			client := metadata.Client.ConnectedVmware.ResourcepoolClient
 
-			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
+			id, err := resourcepools.ParseResourcePoolID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -104,7 +105,7 @@ func (r HostResource) Read() sdk.ResourceFunc {
 				props := model.Properties
 
 				state := ConnectedVmwareResourceModel{
-					Name:          id.HostName,
+					Name:          id.ResourcePoolName,
 					ResourceGroup: id.ResourceGroupName,
 					Location:      model.Location,
 				}
@@ -143,19 +144,19 @@ func (r HostResource) Read() sdk.ResourceFunc {
 	}
 }
 
-func (r HostResource) Delete() sdk.ResourceFunc {
+func (r ResourcepoolResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.HostClient
-			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
+			client := metadata.Client.ConnectedVmware.ResourcepoolClient
+			id, err := resourcepools.ParseResourcePoolID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
 			metadata.Logger.Infof("deleting %s", *id)
 
-			if resp, err := client.Delete(ctx, *id, hosts.DefaultDeleteOperationOptions()); err != nil {
+			if resp, err := client.Delete(ctx, *id, resourcepools.DefaultDeleteOperationOptions()); err != nil {
 				if !response.WasNotFound(resp.HttpResponse) {
 					return fmt.Errorf("deleting %s: %+v", *id, err)
 				}
@@ -165,16 +166,16 @@ func (r HostResource) Delete() sdk.ResourceFunc {
 	}
 }
 
-func (r HostResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return hosts.ValidateHostID
+func (r ResourcepoolResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
+	return resourcepools.ValidateResourcePoolID
 }
 
-func (r HostResource) Update() sdk.ResourceFunc {
+func (r ResourcepoolResource) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.ConnectedVmware.HostClient
-			id, err := hosts.ParseHostID(metadata.ResourceData.Id())
+			client := metadata.Client.ConnectedVmware.ResourcepoolClient
+			id, err := resourcepools.ParseResourcePoolID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -185,21 +186,7 @@ func (r HostResource) Update() sdk.ResourceFunc {
 			}
 
 			if metadata.ResourceData.HasChangesExcept("name", "resource_group_name", "location") {
-				//props := clusters.Cluster{
-				//	ExtendedLocation: &clusters.ExtendedLocation{
-				//		Name: &state.ExtendedLocation.Name,
-				//		Type: &state.ExtendedLocation.Type,
-				//	},
-				//	Kind: &state.Kind,
-				//	Properties: clusters.ClusterProperties{
-				//		InventoryItemId: &state.InventoryItemId,
-				//		MoRefId:         &state.MoRefId,
-				//		VCenterId:       &state.VCenterId,
-				//	},
-				//	Tags: &state.Tags,
-				//}
-
-				patch := hosts.ResourcePatch{
+				patch := resourcepools.ResourcePatch{
 					Tags: &state.Tags,
 				}
 				if _, err := client.Update(ctx, *id, patch); err != nil {

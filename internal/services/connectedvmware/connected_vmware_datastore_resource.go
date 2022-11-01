@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/datastores"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"time"
 )
 
@@ -17,85 +15,8 @@ type DatastoreResource struct{}
 
 var _ sdk.ResourceWithUpdate = DatastoreResource{}
 
-type DatastoreResourceModel struct {
-	Name             string                `tfschema:"name"`
-	ResourceGroup    string                `tfschema:"resource_group_name"`
-	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
-	Kind             string                `tfschema:"kind"`
-	Location         string                `tfschema:"location"`
-	InventoryItemId  string                `tfschema:"inventory_item_id"`
-	MoRefId          string                `tfschema:"mo_ref_id"`
-	VCenterId        string                `tfschema:"vcenter_id"`
-	Tags             map[string]string     `tfschema:"tags"`
-}
-
 func (r DatastoreResource) Arguments() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"name": {
-			Type:         pluginsdk.TypeString,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"resource_group_name": {
-			Type:     pluginsdk.TypeString,
-			Required: true,
-			ForceNew: true,
-		},
-
-		"location": {
-			Type:     pluginsdk.TypeString,
-			Required: true,
-			ForceNew: true,
-		},
-
-		"extended_location": {
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*schema.Schema{
-					"name": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-
-					"type": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-				},
-			},
-		},
-
-		"kind": {
-			Type:     pluginsdk.TypeString,
-			Optional: true,
-		},
-
-		"inventory_item_id": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"mo_ref_id": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"vcenter_id": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"tags": commonschema.Tags(),
-	}
+	return ConnectedVmwareResourceCommonSchema()
 }
 
 func (r DatastoreResource) Attributes() map[string]*schema.Schema {
@@ -114,7 +35,7 @@ func (r DatastoreResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			var model DatastoreResourceModel
+			var model ConnectedVmwareResourceModel
 			if err := metadata.Decode(&model); err != nil {
 				return err
 			}
@@ -182,7 +103,7 @@ func (r DatastoreResource) Read() sdk.ResourceFunc {
 			if model := resp.Model; model != nil {
 				props := model.Properties
 
-				state := DatastoreResourceModel{
+				state := ConnectedVmwareResourceModel{
 					Name:          id.DatastoreName,
 					ResourceGroup: id.ResourceGroupName,
 					Location:      model.Location,
@@ -258,7 +179,7 @@ func (r DatastoreResource) Update() sdk.ResourceFunc {
 				return err
 			}
 
-			var state DatastoreResourceModel
+			var state ConnectedVmwareResourceModel
 			if err := metadata.Decode(&state); err != nil {
 				fmt.Errorf("decoding %+v", err)
 			}
