@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 	"time"
 )
 
@@ -17,30 +18,36 @@ type VirtualMachineResource struct{}
 var _ sdk.ResourceWithUpdate = VirtualMachineResource{}
 
 type VirtualMachineResourceModel struct {
-	ConnectedVmwareResourceProperties ConnectedVmwareResourceModel `tfschema:"connected_vmware"`
-	FirmwareType                      string                       `tfschema:"firmware_type"`
-	MemorySizeMB                      int64                        `tfschema:"memory_size_MB"`
-	NumCPUs                           int64                        `tfschema:"num_CPUs"`
-	NumCoresPerSocket                 int64                        `tfschema:"num_cores_per_socket"`
-	DeviceKey                         int64                        `tfschema:"device_key"`
-	IpSettings                        IpSettingModel               `tfschema:"ip_settings"`
-	NetworkName                       string                       `tfschema:"network_name"`
-	NetworkId                         string                       `tfschema:"network_id"`
-	NicType                           string                       `tfschema:"nic_type"`
-	PowerOnBoot                       string                       `tfschema:"power_on_boot"`
-	AdminPassword                     string                       `tfschema:"admin_password"`
-	AdminUsername                     string                       `tfschema:"admin_username"`
-	ComputerName                      string                       `tfschema:"computer_name"`
-	GuestId                           string                       `tfschema:"guest_id"`
-	OsType                            string                       `tfschema:"os_type"`
-	OsConfiguration                   OsConfigurationModel         `tfschema:"os_configuration"`
-	ClusterId                         string                       `tfschema:"cluster_id"`
-	DatastoreId                       string                       `tfschema:"datastore_id"`
-	HostId                            string                       `tfschema:"host_id"`
-	ResourcepoolId                    string                       `tfschema:"resourcepool_id"`
-	SecureBootEnabled                 bool                         `tfschema:"secure_boot_enabled"`
-	SmbiosUuid                        string                       `tfschema:"smbios_uuid"`
-	StorageProfile                    StorageProfileModel          `tfschema:"storage_profile"`
+	ConnectedVmwareResourceProperties []ConnectedVmwareResourceModel `tfschema:"connected_vmware"`
+	FirmwareType                      string                         `tfschema:"firmware_type"`
+	MemorySizeMB                      int64                          `tfschema:"memory_size_MB"`
+	NumCPUs                           int64                          `tfschema:"num_CPUs"`
+	NumCoresPerSocket                 int64                          `tfschema:"num_cores_per_socket"`
+	NetworkInterface                  []NetworkInterfaceModel        `tfschema:"network_interface"`
+	AdminPassword                     string                         `tfschema:"admin_password"`
+	AdminUsername                     string                         `tfschema:"admin_username"`
+	ComputerName                      string                         `tfschema:"computer_name"`
+	GuestId                           string                         `tfschema:"guest_id"`
+	OsType                            string                         `tfschema:"os_type"`
+	OsConfiguration                   []OsConfigurationModel         `tfschema:"os_configuration"`
+	ClusterId                         string                         `tfschema:"cluster_id"`
+	DatastoreId                       string                         `tfschema:"datastore_id"`
+	HostId                            string                         `tfschema:"host_id"`
+	PlacementResourcePoolId           string                         `tfschema:"placement_resource_pool_id"`
+	ResourcePoolId                    string                         `tfschema:"resource_pool_id"`
+	SecureBootEnabled                 bool                           `tfschema:"secure_boot_enabled"`
+	SmbiosUuid                        string                         `tfschema:"smbios_uuid"`
+	Disks                             []DisksModel                   `tfschema:"disks"`
+	TemplateId                        string                         `tfschema:"template_id"`
+}
+
+type NetworkInterfaceModel struct {
+	DeviceKey   int64            `tfschema:"device_key"`
+	IpSettings  []IpSettingModel `tfschema:"ip_settings"`
+	NetworkName string           `tfschema:"network_name"`
+	NetworkId   string           `tfschema:"network_id"`
+	NicType     string           `tfschema:"nic_type"`
+	PowerOnBoot string           `tfschema:"power_on_boot"`
 }
 
 type IpSettingModel struct {
@@ -56,9 +63,9 @@ type OsConfigurationModel struct {
 	PatchMode      string `tfschema:"patch_mode"`
 }
 
-type StorageProfileModel struct {
-	ControllerKey string `tfschema:"controller_key"`
-	DeviceKey     string `tfschema:"device_key"`
+type DisksModel struct {
+	ControllerKey int64  `tfschema:"controller_key"`
+	DeviceKey     int64  `tfschema:"device_key"`
 	DeviceName    string `tfschma:"device_name"`
 	DiskMode      string `tfschema:"disk_mode"`
 	DiskSizeGB    int64  `tfschema:"disk_size_GB"`
@@ -103,87 +110,7 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 			Optional: true,
 		},
 
-		"device_key": {
-			Type:     pluginsdk.TypeInt,
-			Optional: true,
-		},
-
-		"ip_settings": {
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*schema.Schema{
-					"allocation_method": {
-						Type:     pluginsdk.TypeString,
-						Optional: true,
-						ValidateFunc: validation.StringInSlice([]string{
-							string(virtualmachines.IPAddressAllocationMethodDynamic),
-							string(virtualmachines.IPAddressAllocationMethodLinklayer),
-							string(virtualmachines.IPAddressAllocationMethodOther),
-							string(virtualmachines.IPAddressAllocationMethodRandom),
-							string(virtualmachines.IPAddressAllocationMethodStatic),
-							string(virtualmachines.IPAddressAllocationMethodUnset),
-						}, false),
-					},
-
-					"dns_servers": {
-						Type:     pluginsdk.TypeList,
-						Optional: true,
-						Elem: &pluginsdk.Schema{
-							Type: pluginsdk.TypeString,
-						},
-					},
-
-					"gateway": {
-						Type:     pluginsdk.TypeList,
-						Optional: true,
-						Elem: &pluginsdk.Schema{
-							Type: pluginsdk.TypeString,
-						},
-					},
-
-					"ip_address": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-
-					"subnet_mask": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-				},
-			},
-		},
-
-		"network_name": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"network_id": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"nic_type": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		},
-
-		"power_on_boot": {
-			Type:     pluginsdk.TypeString,
-			Optional: true,
-			ValidateFunc: validation.StringInSlice([]string{
-				string(virtualmachines.PowerOnBootOptionEnabled),
-				string(virtualmachines.PowerOnBootOptionDisabled),
-			}, false),
-		},
+		"network_interface": networkInterfaceSchema(),
 
 		"admin_password": {
 			Type:         pluginsdk.TypeString,
@@ -257,7 +184,7 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
-		"resourcepool_id": {
+		"resource_pool_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
@@ -281,15 +208,13 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
 					"controller_key": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
+						Type:     pluginsdk.TypeInt,
+						Optional: true,
 					},
 
 					"device_key": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
+						Type:     pluginsdk.TypeInt,
+						Optional: true,
 					},
 
 					"device_name": {
@@ -340,6 +265,12 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 				},
 			},
 		},
+
+		"template_id": {
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.StringIsNotEmpty,
+		},
 	}
 }
 
@@ -366,8 +297,9 @@ func (r VirtualMachineResource) Create() sdk.ResourceFunc {
 
 			client := metadata.Client.ConnectedVmware.VirtualMachineClient
 			subscriptionId := metadata.Client.Account.SubscriptionId
+			connectedVmwareCommonProps := model.ConnectedVmwareResourceProperties[0]
 
-			id := virtualmachines.NewVirtualMachineID(subscriptionId, model.ConnectedVmwareResourceProperties.ResourceGroup, model.ConnectedVmwareResourceProperties.Name)
+			id := virtualmachines.NewVirtualMachineID(subscriptionId, connectedVmwareCommonProps.ResourceGroup, connectedVmwareCommonProps.Name)
 
 			existing, err := client.Get(ctx, id)
 			if err != nil && !response.WasNotFound(existing.HttpResponse) {
@@ -378,6 +310,63 @@ func (r VirtualMachineResource) Create() sdk.ResourceFunc {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
+			osType := virtualmachines.OsType(model.OsType)
+			firmwareType := virtualmachines.FirmwareType(model.FirmwareType)
+			props := virtualmachines.VirtualMachineProperties{
+				CustomResourceName: utils.String(connectedVmwareCommonProps.Name),
+				HardwareProfile: &virtualmachines.HardwareProfile{
+					MemorySizeMB:      utils.Int64(model.MemorySizeMB),
+					NumCPUs:           utils.Int64(model.NumCPUs),
+					NumCoresPerSocket: utils.Int64(model.NumCoresPerSocket),
+				},
+				InventoryItemId: utils.String(connectedVmwareCommonProps.InventoryItemId),
+				FirmwareType:    &firmwareType,
+				MoRefId:         utils.String(connectedVmwareCommonProps.MoRefId),
+				NetworkProfile: &virtualmachines.NetworkProfile{
+					NetworkInterfaces: ExpandNetworkInterface(model.NetworkInterface),
+				},
+				OsProfile: &virtualmachines.OsProfile{
+					AdminPassword: utils.String(model.AdminPassword),
+					AdminUsername: utils.String(model.AdminUsername),
+					ComputerName:  utils.String(model.ComputerName),
+					OsType:        &osType,
+				},
+				PlacementProfile: &virtualmachines.PlacementProfile{
+					ClusterId:      utils.String(model.ClusterId),
+					DatastoreId:    utils.String(model.DatastoreId),
+					HostId:         utils.String(model.HostId),
+					ResourcePoolId: utils.String(model.PlacementResourcePoolId),
+				},
+				ResourcePoolId: &model.ResourcePoolId,
+				SmbiosUuid:     utils.String(model.SmbiosUuid),
+				StorageProfile: &virtualmachines.StorageProfile{
+					Disks: ExpandDisks(model.Disks),
+				},
+				TemplateId: utils.String(model.TemplateId),
+				VCenterId:  utils.String(connectedVmwareCommonProps.VCenterId),
+			}
+
+			if osType == virtualmachines.OsTypeWindows {
+			}
+
+			virtualMachine := virtualmachines.VirtualMachine{
+				ExtendedLocation: &virtualmachines.ExtendedLocation{
+					Name: utils.String(connectedVmwareCommonProps.ExtendedLocation.Name),
+					Type: utils.String(connectedVmwareCommonProps.ExtendedLocation.Type),
+				},
+				Id:         utils.String(id.ID()),
+				Kind:       utils.String(connectedVmwareCommonProps.Kind),
+				Location:   connectedVmwareCommonProps.Location,
+				Properties: props,
+				Tags:       &connectedVmwareCommonProps.Tags,
+			}
+
+			if err := client.CreateThenPoll(ctx, id, virtualMachine); err != nil {
+				return fmt.Errorf("creating %s： %+v", id, err)
+			}
+
+			metadata.SetID(id)
+			return nil
 		},
 	}
 }
@@ -395,23 +384,96 @@ func (r VirtualMachineResource) Read() sdk.ResourceFunc {
 
 			resp, err := client.Get(ctx, *id)
 			if err != nil {
-
+				if response.WasNotFound(resp.HttpResponse) {
+					return metadata.MarkAsGone(id)
+				}
+				return fmt.Errorf("reading %s: %+v", *id, err)
 			}
+
+			if model := resp.Model; model != nil {
+				props := model.Properties
+
+				state := VirtualMachineResourceModel{
+					ConnectedVmwareResourceProperties: FlattenConnectedVmwareResourceProperties(model, id),
+					FirmwareType:                      string(*props.FirmwareType),
+					NetworkInterface:                  FlattenNetworkProfile(props.NetworkProfile),
+					ResourcePoolId:                    *props.ResourcePoolId,
+					SmbiosUuid:                        *props.SmbiosUuid,
+					Disks:                             FlattenStorageProfile(props.StorageProfile),
+					TemplateId:                        *props.TemplateId,
+				}
+
+				if props.HardwareProfile != nil {
+					state.MemorySizeMB = *props.HardwareProfile.MemorySizeMB
+					state.NumCPUs = *props.HardwareProfile.NumCPUs
+					state.NumCoresPerSocket = *props.HardwareProfile.NumCoresPerSocket
+				}
+
+				if props.OsProfile != nil {
+					state.AdminPassword = *props.OsProfile.AdminPassword
+					state.AdminUsername = *props.OsProfile.AdminUsername
+					state.ComputerName = *props.OsProfile.ComputerName
+					state.OsType = string(*props.OsProfile.OsType)
+				}
+
+				if props.PlacementProfile != nil {
+					state.ClusterId = *props.PlacementProfile.ClusterId
+					state.DatastoreId = *props.PlacementProfile.DatastoreId
+					state.HostId = *props.PlacementProfile.HostId
+					state.ResourcePoolId = *props.PlacementProfile.ResourcePoolId
+				}
+
+				return metadata.Encode(&state)
+			}
+			return nil
 		},
 	}
 }
 
 func (r VirtualMachineResource) Delete() sdk.ResourceFunc {
-	//TODO implement me
-	panic("implement me")
+	return sdk.ResourceFunc{
+		Timeout: 30 * time.Minute,
+		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
+			client := metadata.Client.ConnectedVmware.VirtualMachineClient
+			id, err := virtualmachines.ParseVirtualMachineID(metadata.ResourceData.Id())
+			if err != nil {
+				return err
+			}
+
+			metadata.Logger.Infof("deleting %s", *id)
+
+			if resp, err := client.Delete(ctx, *id, virtualmachines.DefaultDeleteOperationOptions()); err != nil {
+				if !response.WasNotFound(resp.HttpResponse) {
+					return fmt.Errorf("deleting %s: %+v", *id, err)
+				}
+			}
+			return nil
+		},
+	}
 }
 
 func (r VirtualMachineResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	//TODO implement me
-	panic("implement me")
+	return virtualmachines.ValidateVirtualMachineID
 }
 
 func (r VirtualMachineResource) Update() sdk.ResourceFunc {
-	//TODO implement me
-	panic("implement me")
+	return sdk.ResourceFunc{
+		Timeout: 30 * time.Minute,
+		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
+			client := metadata.Client.ConnectedVmware.VirtualMachineClient
+			id, err := virtualmachines.ParseVirtualMachineID(metadata.ResourceData.Id())
+			if err != nil {
+				return err
+			}
+
+			var state VirtualMachineResourceModel
+			if err := metadata.Decode(&state); err != nil {
+				return fmt.Errorf("decoding %+v", err)
+			}
+
+			if metadata.ResourceData.HasChangeExcept()
+
+			client.Update()
+		},
+	}
 }

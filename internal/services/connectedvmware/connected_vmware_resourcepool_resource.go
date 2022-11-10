@@ -71,7 +71,7 @@ func (r ResourcepoolResource) Create() sdk.ResourceFunc {
 			}
 			resourcepool.Properties = props
 
-			if _, err := client.Create(ctx, id, resourcepool); err != nil {
+			if err := client.CreateThenPoll(ctx, id, resourcepool); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
