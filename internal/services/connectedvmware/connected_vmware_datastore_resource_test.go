@@ -16,8 +16,8 @@ import (
 type ConnectedVmwareDatastoreResource struct{}
 
 func TestAccConnectedVmwareDatastore_basic(t *testing.T) {
-	data := acceptance.BuildTestData(t, "azurerm_connected_vmware_cluster", "test")
-	r := ConnectedVmwareClusterResource{}
+	data := acceptance.BuildTestData(t, "azurerm_connected_vmware_datastore", "test")
+	r := ConnectedVmwareDatastoreResource{}
 
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
@@ -53,7 +53,7 @@ func (r ConnectedVmwareDatastoreResource) basic(data acceptance.TestData) string
 %s
 
 resource "azurerm_connected_vmware_datastore" "test" {
-  name = "acctestcluster%d"
+  name = "acctestdatastore%d"
   resource_group_name = azurerm_resource_group.test.name
   location = azurerm_resource_group.test.location
   mo_ref_id = "aaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"

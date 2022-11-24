@@ -252,7 +252,7 @@ func ExpandIpSettings(input []IpSettingModel) *virtualmachines.NicIPSettings {
 	return &settings
 }
 
-func ExpandDisks(input []DiskseModel) *[]virtualmachines.VirtualDisk {
+func ExpandDisks(input []DisksModel) *[]virtualmachines.VirtualDisk {
 	if len(input) == 0 {
 		return nil
 	}
@@ -292,6 +292,44 @@ func ExpandDisks(input []DiskseModel) *[]virtualmachines.VirtualDisk {
 	}
 
 	return &disks
+}
+
+func ExpandExtendedLocation(input []ExtendedLocationModel) (*string, *string) {
+	if len(input) == 0 {
+		return nil, nil
+	}
+	v := input[0]
+
+	var locationName string
+	var locationType string
+	if v.Type != "" {
+		locationType = v.Type
+	}
+
+	if v.Name != "" {
+		locationName = v.Name
+	}
+
+	return &locationName, &locationType
+}
+
+func ExpandCredential(input []CredentialModel) (*string, *string) {
+	if len(input) == 0 {
+		return nil, nil
+	}
+	v := input[0]
+
+	var password string
+	var username string
+	if v.Password != "" {
+		password = v.Password
+	}
+
+	if v.Username != "" {
+		username = v.Username
+	}
+
+	return &username, &password
 }
 
 func FlattenConnectedVmwareResourceProperties(input *virtualmachines.VirtualMachine, id *virtualmachines.VirtualMachineId) []ConnectedVmwareResourceModel {

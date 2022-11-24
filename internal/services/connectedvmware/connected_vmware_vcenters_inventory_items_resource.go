@@ -23,11 +23,11 @@ type VcentersInventoryItemsResourceModel struct {
 	MoName            string                    `tfschema:"mo_name"`
 	MoRefId           string                    `tfschema:"mo_ref_id"`
 	Parent            InventoryItemDetailsModel `tfschema:"parent"`
-	CapacityGB        int64                     `tfschema:"capacity_GB"`
-	FreeSpaceGB       int64                     `tfschema:"free_space_GB"`
+	CapacityGB        int64                     `tfschema:"capacity_gb"`
+	FreeSpaceGB       int64                     `tfschema:"free_space_gb"`
 	FolderPath        string                    `tfschema:"folder_path"`
-	MemorySizeGB      int64                     `tfschema:"memory_size_GB"`
-	NumCPUs           int64                     `tfschema:"num_CPUs"`
+	MemorySizeGB      int64                     `tfschema:"memory_size_gb"`
+	NumCPUs           int64                     `tfschema:"num_cpus"`
 	NumCoresPerSocket int64                     `tfschema:"num_cores_per_socket"`
 	OsName            string                    `tfschema:"os_name"`
 	OsType            string                    `tfschema:"os_type"`
@@ -80,27 +80,31 @@ func (r VcentersInventoryItemsResource) Arguments() map[string]*schema.Schema {
 			}, false),
 		},
 
-		"managed_resource_Id": {
+		"managed_resource_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"mo_name": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
-		"mo_Ref_id": {
+		"mo_ref_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"parent": {
 			Type:     pluginsdk.TypeList,
 			Optional: true,
+			ForceNew: true,
 			MaxItems: 1,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
@@ -119,46 +123,54 @@ func (r VcentersInventoryItemsResource) Arguments() map[string]*schema.Schema {
 			},
 		},
 
-		"capacity_GB": {
+		"capacity_gb": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
+			ForceNew: true,
 		},
 
-		"free_space_GB": {
+		"free_space_gb": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
+			ForceNew: true,
 		},
 
 		"folder_path": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
-		"memory_size_GB": {
+		"memory_size_gb": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
+			ForceNew: true,
 		},
 
-		"num_CPUs": {
+		"num_cpus": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
+			ForceNew: true,
 		},
 
 		"num_cores_per_socket": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
+			ForceNew: true,
 		},
 
 		"os_name": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"os_type": {
 			Type:     pluginsdk.TypeString,
 			Optional: true,
+			ForceNew: true,
 			ValidateFunc: validation.StringInSlice([]string{
 				string(inventoryitems.OsTypeWindows),
 				string(inventoryitems.OsTypeLinux),
@@ -169,6 +181,7 @@ func (r VcentersInventoryItemsResource) Arguments() map[string]*schema.Schema {
 		"host": {
 			Type:     pluginsdk.TypeList,
 			Optional: true,
+			ForceNew: true,
 			MaxItems: 1,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
@@ -190,18 +203,21 @@ func (r VcentersInventoryItemsResource) Arguments() map[string]*schema.Schema {
 		"instance_uuid": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.IsUUID,
 		},
 
 		"ip_addresses": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.IsIPAddress,
 		},
 
 		"resource_pool": {
 			Type:     pluginsdk.TypeList,
 			Optional: true,
+			ForceNew: true,
 			MaxItems: 1,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
@@ -223,6 +239,7 @@ func (r VcentersInventoryItemsResource) Arguments() map[string]*schema.Schema {
 		"smbios_uuid": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.IsUUID,
 		},
 	}
@@ -233,7 +250,7 @@ func (r VcentersInventoryItemsResource) Attributes() map[string]*schema.Schema {
 }
 
 func (r VcentersInventoryItemsResource) ModelObject() interface{} {
-	return &VcentersInventoryItemsResource{}
+	return &VcentersInventoryItemsResourceModel{}
 }
 
 func (r VcentersInventoryItemsResource) ResourceType() string {
@@ -598,6 +615,29 @@ func (r VcentersInventoryItemsResource) Read() sdk.ResourceFunc {
 
 				return metadata.Encode(&state)
 			}
+			return nil
+		},
+	}
+}
+
+func (r VcentersInventoryItemsResource) Delete() sdk.ResourceFunc {
+	return sdk.ResourceFunc{
+		Timeout: 30 * time.Minute,
+		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
+			client := metadata.Client.ConnectedVmware.InventoryItemsClient
+			id, err := inventoryitems.ParseInventoryItemID(metadata.ResourceData.Id())
+			if err != nil {
+				return err
+			}
+
+			metadata.Logger.Infof("deleting %s", *id)
+
+			if resp, err := client.Delete(ctx, *id); err != nil {
+				if !response.WasNotFound(resp.HttpResponse) {
+					return fmt.Errorf("deleting %s: %+v", *id, err)
+				}
+			}
+
 			return nil
 		},
 	}

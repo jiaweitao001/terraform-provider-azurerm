@@ -15,7 +15,15 @@ func (r Registration) DataSources() []sdk.DataSource {
 }
 
 func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{}
+	return []sdk.Resource{
+		ClusterResource{},
+		DatastoreResource{},
+		HostResource{},
+		ResourcepoolResource{},
+		VcenterResource{},
+		VcentersInventoryItemsResource{},
+		VirtualMachineResource{},
+	}
 }
 
 func (r Registration) Name() string {

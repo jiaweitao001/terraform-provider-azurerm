@@ -15,6 +15,18 @@ type DatastoreResource struct{}
 
 var _ sdk.ResourceWithUpdate = DatastoreResource{}
 
+type DatastoreResourceModel struct {
+	Name             string                `tfschema:"name"`
+	ResourceGroup    string                `tfschema:"resource_group_name"`
+	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
+	Kind             string                `tfschema:"kind"`
+	Location         string                `tfschema:"location"`
+	InventoryItemId  string                `tfschema:"inventory_item_id"`
+	MoRefId          string                `tfschema:"mo_ref_id"`
+	VCenterId        string                `tfschema:"vcenter_id"`
+	Tags             map[string]string     `tfschema:"tags"`
+}
+
 func (r DatastoreResource) Arguments() map[string]*schema.Schema {
 	return ConnectedVmwareResourceCommonSchema()
 }
@@ -24,7 +36,7 @@ func (r DatastoreResource) Attributes() map[string]*schema.Schema {
 }
 
 func (r DatastoreResource) ModelObject() interface{} {
-	return DatastoreResource{}
+	return &DatastoreResourceModel{}
 }
 
 func (r DatastoreResource) ResourceType() string {
@@ -35,7 +47,7 @@ func (r DatastoreResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			var model ConnectedVmwareResourceModel
+			var model DatastoreResourceModel
 			if err := metadata.Decode(&model); err != nil {
 				return err
 			}
@@ -103,7 +115,7 @@ func (r DatastoreResource) Read() sdk.ResourceFunc {
 			if model := resp.Model; model != nil {
 				props := model.Properties
 
-				state := ConnectedVmwareResourceModel{
+				state := DatastoreResourceModel{
 					Name:          id.DatastoreName,
 					ResourceGroup: id.ResourceGroupName,
 					Location:      model.Location,
@@ -179,7 +191,7 @@ func (r DatastoreResource) Update() sdk.ResourceFunc {
 				return err
 			}
 
-			var state ConnectedVmwareResourceModel
+			var state DatastoreResourceModel
 			if err := metadata.Decode(&state); err != nil {
 				fmt.Errorf("decoding %+v", err)
 			}

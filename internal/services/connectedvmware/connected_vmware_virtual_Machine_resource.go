@@ -20,8 +20,8 @@ var _ sdk.ResourceWithUpdate = VirtualMachineResource{}
 type VirtualMachineResourceModel struct {
 	ConnectedVmwareResourceProperties []ConnectedVmwareResourceModel `tfschema:"connected_vmware"`
 	FirmwareType                      string                         `tfschema:"firmware_type"`
-	MemorySizeMB                      int64                          `tfschema:"memory_size_MB"`
-	NumCPUs                           int64                          `tfschema:"num_CPUs"`
+	MemorySizeMB                      int64                          `tfschema:"memory_size_mb"`
+	NumCPUs                           int64                          `tfschema:"num_cpus"`
 	NumCoresPerSocket                 int64                          `tfschema:"num_cores_per_socket"`
 	NetworkInterface                  []NetworkInterfaceModel        `tfschema:"network_interface"`
 	AdminPassword                     string                         `tfschema:"admin_password"`
@@ -66,9 +66,9 @@ type OsConfigurationModel struct {
 type DisksModel struct {
 	ControllerKey int64  `tfschema:"controller_key"`
 	DeviceKey     int64  `tfschema:"device_key"`
-	DeviceName    string `tfschma:"device_name"`
+	DeviceName    string `tfschema:"device_name"`
 	DiskMode      string `tfschema:"disk_mode"`
-	DiskSizeGB    int64  `tfschema:"disk_size_GB"`
+	DiskSizeGB    int64  `tfschema:"disk_size_gb"`
 	DiskType      string `tfschema:"disk_type"`
 	DiskName      string `tfschema:"disk_name"`
 	UnitNumber    int64  `tfschema:"unit_number"`
@@ -95,12 +95,12 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 			}, false),
 		},
 
-		"memory_size_MB": {
+		"memory_size_mb": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
 		},
 
-		"num_CPUs": {
+		"num_cpus": {
 			Type:     pluginsdk.TypeInt,
 			Optional: true,
 		},
@@ -233,7 +233,7 @@ func (r VirtualMachineResource) Arguments() map[string]*schema.Schema {
 						}, false),
 					},
 
-					"disk_size_GB": {
+					"disk_size_gb": {
 						Type:     pluginsdk.TypeInt,
 						Optional: true,
 					},
@@ -279,7 +279,7 @@ func (r VirtualMachineResource) Attributes() map[string]*schema.Schema {
 }
 
 func (r VirtualMachineResource) ModelObject() interface{} {
-	return VirtualMachineResource{}
+	return &VirtualMachineResourceModel{}
 }
 
 func (r VirtualMachineResource) ResourceType() string {
@@ -471,9 +471,70 @@ func (r VirtualMachineResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
-			if metadata.ResourceData.HasChangeExcept()
+			update := virtualmachines.VirtualMachineUpdate{
+				Properties: &virtualmachines.VirtualMachineUpdateProperties{},
+			}
 
-			client.Update()
+			if metadata.ResourceData.HasChange("memory_size_mb") {
+				update.Properties.HardwareProfile.MemorySizeMB = utils.Int64(state.MemorySizeMB)
+			}
+
+			if metadata.ResourceData.HasChange("num_cpus") {
+				update.Properties.HardwareProfile.NumCPUs = utils.Int64(state.NumCPUs)
+			}
+
+			if metadata.ResourceData.HasChange("num_cores_per_socket") {
+				update.Properties.HardwareProfile.NumCoresPerSocket = utils.Int64(state.NumCoresPerSocket)
+			}
+
+			if metadata.ResourceData.HasChange("network_interface") {
+				networkInterfaceRaw := ExpandNetworkInterface(state.NetworkInterface)
+
+				var networkInterfaceUpdate []virtualmachines.NetworkInterfaceUpdate
+				for _, value := range *networkInterfaceRaw {
+					var networkInterface virtualmachines.NetworkInterfaceUpdate
+					networkInterface.NetworkId = value.NetworkId
+					networkInterface.DeviceKey = value.DeviceKey
+					networkInterface.Name = value.Name
+					networkInterface.NicType = value.NicType
+					networkInterface.PowerOnBoot = value.PowerOnBoot
+
+					networkInterfaceUpdate = append(networkInterfaceUpdate, networkInterface)
+				}
+
+				update.Properties.NetworkProfile = &virtualmachines.NetworkProfileUpdate{
+					NetworkInterfaces: &networkInterfaceUpdate,
+				}
+			}
+
+			if metadata.ResourceData.HasChange("disks") {
+				disksRaw := ExpandDisks(state.Disks)
+
+				var disks []virtualmachines.VirtualDiskUpdate
+				for _, value := range *disksRaw {
+					var disk virtualmachines.VirtualDiskUpdate
+					disk.DiskType = value.DiskType
+					disk.DiskSizeGB = value.DiskSizeGB
+					disk.DiskMode = value.DiskMode
+					disk.Name = value.Name
+					disk.DeviceKey = value.DeviceKey
+					disk.UnitNumber = value.UnitNumber
+					disk.ControllerKey = value.ControllerKey
+					disk.DeviceName = value.DeviceName
+
+					disks = append(disks, disk)
+				}
+
+				update.Properties.StorageProfile = &virtualmachines.StorageProfileUpdate{
+					Disks: &disks,
+				}
+			}
+
+			if _, err := client.Update(ctx, *id, update); err != nil {
+				return fmt.Errorf("updating %s: %+v", *id, err)
+			}
+
+			return nil
 		},
 	}
 }

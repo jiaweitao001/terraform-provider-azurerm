@@ -18,15 +18,15 @@ type VcenterResource struct{}
 var _ sdk.ResourceWithUpdate = VcenterResource{}
 
 type VcenterResourceModel struct {
-	Name             string                `tfschema:"name"`
-	ResourceGroup    string                `tfschema:"resource_group_name"`
-	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
-	Kind             string                `tfschema:"kind"`
-	Location         string                `tfschema:"location"`
-	Credential       CredentialModel       `tfschema:"credential"`
-	Fqdn             string                `tfschema:"fqdn"`
-	Port             int64                 `tfschema:"port"`
-	Tags             map[string]string     `tfschema:"tags"`
+	Name             string                  `tfschema:"name"`
+	ResourceGroup    string                  `tfschema:"resource_group_name"`
+	ExtendedLocation []ExtendedLocationModel `tfschema:"extended_location"`
+	Kind             string                  `tfschema:"kind"`
+	Location         string                  `tfschema:"location"`
+	Credential       []CredentialModel       `tfschema:"credential"`
+	Fqdn             string                  `tfschema:"fqdn"`
+	Port             int64                   `tfschema:"port"`
+	Tags             map[string]string       `tfschema:"tags"`
 }
 
 type CredentialModel struct {
@@ -64,7 +64,7 @@ func (r VcenterResource) Arguments() map[string]*schema.Schema {
 
 		"extended_location": {
 			Type:     pluginsdk.TypeList,
-			Optional: true,
+			Required: true,
 			MaxItems: 1,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
@@ -110,8 +110,9 @@ func (r VcenterResource) Arguments() map[string]*schema.Schema {
 		},
 
 		"port": {
-			Type:     pluginsdk.TypeString,
-			Optional: true,
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.IsPortNumber,
 		},
 
 		"tags": commonschema.Tags(),
@@ -123,7 +124,7 @@ func (r VcenterResource) Attributes() map[string]*schema.Schema {
 }
 
 func (r VcenterResource) ModelObject() interface{} {
-	return VcenterResource{}
+	return &VcenterResourceModel{}
 }
 
 func (r VcenterResource) ResourceType() string {
@@ -154,24 +155,37 @@ func (r VcenterResource) Create() sdk.ResourceFunc {
 			}
 
 			props := vcenters.VCenterProperties{
-				Credentials: &vcenters.VICredential{
-					Password: &model.Credential.Password,
-					Username: &model.Credential.Username,
-				},
 				Fqdn: model.Fqdn,
-				Port: &model.Port,
+			}
+
+			username, password := ExpandCredential(model.Credential)
+			props.Credentials = &vcenters.VICredential{
+				Password: password,
+				Username: username,
+			}
+
+			if model.Port != 0 {
+				props.Port = &model.Port
 			}
 
 			vcenter := vcenters.VCenter{
-				ExtendedLocation: &vcenters.ExtendedLocation{
-					Name: &model.ExtendedLocation.Name,
-					Type: &model.ExtendedLocation.Type,
-				},
-				Kind:       &model.Kind,
-				Location:   model.Location,
-				Properties: vcenters.VCenterProperties{},
-				Tags:       &model.Tags,
+				Location: model.Location,
 			}
+
+			locationName, locationType := ExpandExtendedLocation(model.ExtendedLocation)
+			vcenter.ExtendedLocation = &vcenters.ExtendedLocation{
+				Name: locationName,
+				Type: locationType,
+			}
+
+			if model.Kind != "" {
+				vcenter.Kind = &model.Kind
+			}
+
+			if model.Tags != nil {
+				vcenter.Tags = &model.Tags
+			}
+
 			vcenter.Properties = props
 
 			if _, err := client.Create(ctx, id, vcenter); err != nil {
@@ -214,9 +228,11 @@ func (r VcenterResource) Read() sdk.ResourceFunc {
 				}
 
 				if model.ExtendedLocation != nil {
-					state.ExtendedLocation = ExtendedLocationModel{
-						Name: *model.ExtendedLocation.Name,
-						Type: *model.ExtendedLocation.Type,
+					state.ExtendedLocation = []ExtendedLocationModel{
+						{
+							Name: *model.ExtendedLocation.Name,
+							Type: *model.ExtendedLocation.Type,
+						},
 					}
 				}
 
@@ -229,8 +245,12 @@ func (r VcenterResource) Read() sdk.ResourceFunc {
 				}
 
 				if props.Credentials != nil {
-					state.Credential.Password = *props.Credentials.Password
-					state.Credential.Username = *props.Credentials.Username
+					state.Credential = []CredentialModel{
+						{
+							Username: *props.Credentials.Username,
+							Password: *props.Credentials.Password,
+						},
+					}
 				}
 
 				if model.Tags != nil {
