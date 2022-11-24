@@ -15,6 +15,18 @@ type ResourcepoolResource struct{}
 
 var _ sdk.ResourceWithUpdate = ResourcepoolResource{}
 
+type ResourcepoolResourceModel struct {
+	Name             string                `tfschema:"name"`
+	ResourceGroup    string                `tfschema:"resource_group_name"`
+	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
+	Kind             string                `tfschema:"kind"`
+	Location         string                `tfschema:"location"`
+	InventoryItemId  string                `tfschema:"inventory_item_id"`
+	MoRefId          string                `tfschema:"mo_ref_id"`
+	VCenterId        string                `tfschema:"vcenter_id"`
+	Tags             map[string]string     `tfschema:"tags"`
+}
+
 func (r ResourcepoolResource) Arguments() map[string]*schema.Schema {
 	return ConnectedVmwareResourceCommonSchema()
 }
@@ -24,7 +36,7 @@ func (r ResourcepoolResource) Attributes() map[string]*schema.Schema {
 }
 
 func (r ResourcepoolResource) ModelObject() interface{} {
-	return ResourcepoolResource{}
+	return &ResourcepoolResourceModel{}
 }
 
 func (r ResourcepoolResource) ResourceType() string {
@@ -35,7 +47,7 @@ func (r ResourcepoolResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			var model ConnectedVmwareResourceModel
+			var model ResourcepoolResourceModel
 			if err := metadata.Decode(&model); err != nil {
 				return err
 			}
@@ -104,7 +116,7 @@ func (r ResourcepoolResource) Read() sdk.ResourceFunc {
 			if model := resp.Model; model != nil {
 				props := model.Properties
 
-				state := ConnectedVmwareResourceModel{
+				state := ResourcepoolResourceModel{
 					Name:          id.ResourcePoolName,
 					ResourceGroup: id.ResourceGroupName,
 					Location:      model.Location,
@@ -180,7 +192,7 @@ func (r ResourcepoolResource) Update() sdk.ResourceFunc {
 				return err
 			}
 
-			var state ConnectedVmwareResourceModel
+			var state ResourcepoolResourceModel
 			if err := metadata.Decode(&state); err != nil {
 				return fmt.Errorf("decoding %+v", err)
 			}
