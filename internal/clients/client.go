@@ -70,6 +70,7 @@ import (
 	elastic "github.com/hashicorp/terraform-provider-azurerm/internal/services/elastic/client"
 	eventgrid "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventgrid/client"
 	eventhub "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/client"
+	extendedlocation "github.com/hashicorp/terraform-provider-azurerm/internal/services/extendedlocation/client"
 	firewall "github.com/hashicorp/terraform-provider-azurerm/internal/services/firewall/client"
 	fluidrelay "github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/client"
 	frontdoor "github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/client"
@@ -204,6 +205,7 @@ type Client struct {
 	Elastic                      *elastic.Client
 	EventGrid                    *eventgrid_v2022_06_15.Client
 	Eventhub                     *eventhub.Client
+	ExtendedLocation             *extendedlocation.Client
 	Firewall                     *firewall.Client
 	FluidRelay                   *fluidrelay_2022_05_26.Client
 	Frontdoor                    *frontdoor.Client
@@ -430,6 +432,7 @@ func (client *Client) Build(ctx context.Context, o *common.ClientOptions) error 
 	if client.Eventhub, err = eventhub.NewClient(o); err != nil {
 		return fmt.Errorf("building clients for Eventhub: %+v", err)
 	}
+	client.ExtendedLocation = extendedlocation.NewClient(o)
 	if client.Firewall, err = firewall.NewClient(o); err != nil {
 		return fmt.Errorf("building clients for Firewall: %+v", err)
 	}
