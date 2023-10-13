@@ -22,7 +22,6 @@ func (r Registration) Resources() []sdk.Resource {
 		ResourcepoolResource{},
 		VcenterResource{},
 		VcentersInventoryItemsResource{},
-		VirtualMachineResource{},
 	}
 }
 

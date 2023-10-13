@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2020-10-01-preview/inventoryitems"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/inventoryitems"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -349,7 +349,7 @@ func (r VcentersInventoryItemsResource) Create() sdk.ResourceFunc {
 						MoName:          &model.Host.MoName,
 					},
 					InstanceUuid: &model.InstanceUuid,
-					IpAddresses:  &model.IpAddresses,
+					IPAddresses:  &model.IpAddresses,
 					OsName:       &model.OsName,
 					OsType:       &osType,
 					ResourcePool: &inventoryitems.InventoryItemDetails{
@@ -415,7 +415,7 @@ func (r VcentersInventoryItemsResource) Read() sdk.ResourceFunc {
 				state := VcentersInventoryItemsResourceModel{
 					Name:          id.InventoryItemName,
 					ResourceGroup: id.ResourceGroupName,
-					VcenterName:   id.VcenterName,
+					VcenterName:   id.VCenterName,
 				}
 				if clusterInventoryItem, ok := props.(inventoryitems.ClusterInventoryItem); ok {
 					state.InventoryType = string(inventoryitems.InventoryTypeCluster)
@@ -537,8 +537,8 @@ func (r VcentersInventoryItemsResource) Read() sdk.ResourceFunc {
 						state.InstanceUuid = *virtualMachineInventoryItem.InstanceUuid
 					}
 
-					if virtualMachineInventoryItem.IpAddresses != nil {
-						state.IpAddresses = *virtualMachineInventoryItem.IpAddresses
+					if virtualMachineInventoryItem.IPAddresses != nil {
+						state.IpAddresses = *virtualMachineInventoryItem.IPAddresses
 					}
 
 					if virtualMachineInventoryItem.OsName != nil {
