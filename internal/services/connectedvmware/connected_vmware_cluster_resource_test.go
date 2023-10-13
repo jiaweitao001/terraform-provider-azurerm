@@ -58,6 +58,11 @@ resource "azurerm_connected_vmware_cluster" "test" {
   location = azurerm_resource_group.test.location
   mo_ref_id = "aaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
   vcenter_id = azurerm_connected_vmware_vcenter.test.id
+
+  extended_location {
+	name = "foo"
+	type = "customLocation"
+  }
 }
 `, template, data.RandomInteger)
 }
