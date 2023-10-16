@@ -3,11 +3,13 @@ package connectedvmware
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/clusters"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"log"
 	"time"
 )
 
@@ -16,15 +18,15 @@ type ClusterResource struct{}
 var _ sdk.ResourceWithUpdate = ClusterResource{}
 
 type ClusterResourceModel struct {
-	Name             string                `tfschema:"name"`
-	ResourceGroup    string                `tfschema:"resource_group_name"`
-	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
-	Kind             string                `tfschema:"kind"`
-	Location         string                `tfschema:"location"`
-	InventoryItemId  string                `tfschema:"inventory_item_id"`
-	MoRefId          string                `tfschema:"mo_ref_id"`
-	VCenterId        string                `tfschema:"vcenter_id"`
-	Tags             map[string]string     `tfschema:"tags"`
+	Name             string                  `tfschema:"name"`
+	ResourceGroup    string                  `tfschema:"resource_group_name"`
+	ExtendedLocation []ExtendedLocationModel `tfschema:"extended_location"`
+	Kind             string                  `tfschema:"kind"`
+	Location         string                  `tfschema:"location"`
+	InventoryItemId  string                  `tfschema:"inventory_item_id"`
+	MoRefId          string                  `tfschema:"mo_ref_id"`
+	VCenterId        string                  `tfschema:"vcenter_id"`
+	Tags             map[string]string       `tfschema:"tags"`
 }
 
 func (r ClusterResource) Arguments() map[string]*schema.Schema {
@@ -72,10 +74,12 @@ func (r ClusterResource) Create() sdk.ResourceFunc {
 				VCenterId:       &model.VCenterId,
 			}
 
+			locationName, locationType := ExpandExtendedLocation(model.ExtendedLocation)
+			log.Printf("location is %s", pointer.From(locationName))
 			cluster := clusters.Cluster{
 				ExtendedLocation: &clusters.ExtendedLocation{
-					Name: &model.ExtendedLocation.Name,
-					Type: &model.ExtendedLocation.Type,
+					Name: locationName,
+					Type: locationType,
 				},
 				Kind:     &model.Kind,
 				Location: model.Location,
@@ -83,7 +87,7 @@ func (r ClusterResource) Create() sdk.ResourceFunc {
 			}
 			cluster.Properties = props
 
-			if _, err := client.Create(ctx, id, cluster); err != nil {
+			if err := client.CreateThenPoll(ctx, id, cluster); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -122,10 +126,9 @@ func (r ClusterResource) Read() sdk.ResourceFunc {
 				}
 
 				if model.ExtendedLocation != nil {
-					state.ExtendedLocation = ExtendedLocationModel{
-						Name: *model.ExtendedLocation.Name,
-						Type: *model.ExtendedLocation.Type,
-					}
+					name := model.ExtendedLocation.Name
+					location := model.ExtendedLocation.Type
+					state.ExtendedLocation = FlattenExtendedLocation(name, location)
 				}
 
 				if model.Kind != nil {
