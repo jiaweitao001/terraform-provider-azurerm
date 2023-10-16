@@ -58,7 +58,7 @@ resource "azurerm_connected_vmware_vcenter" "test" {
   location = azurerm_resource_group.test.location
   fqdn = "ContosoVMware.contoso.com"
   extended_location {
-	name = "/subscriptions/a5015e1c-867f-4533-8541-85cd470d0cfb/resourceGroups/demoRG/providers/Microsoft.ExtendedLocation/customLocations/contoso"
+	name = "/subscriptions/a5215e1c-837f-4133-8531-85cd161d0cfb/resourceGroups/demoRG/providers/Microsoft.ExtendedLocation/customLocations/contoso"
     type = "testlocationtype"
   }
 }

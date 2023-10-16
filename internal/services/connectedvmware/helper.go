@@ -8,17 +8,17 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
 
-type ConnectedVmwareResourceModel struct {
-	Name             string                `tfschema:"name"`
-	ResourceGroup    string                `tfschema:"resource_group_name"`
-	ExtendedLocation ExtendedLocationModel `tfschema:"extended_location"`
-	Kind             string                `tfschema:"kind"`
-	Location         string                `tfschema:"location"`
-	InventoryItemId  string                `tfschema:"inventory_item_id"`
-	MoRefId          string                `tfschema:"mo_ref_id"`
-	VCenterId        string                `tfschema:"vcenter_id"`
-	Tags             map[string]string     `tfschema:"tags"`
-}
+//type ConnectedVmwareResourceModel struct {
+//	Name             string                  `tfschema:"name"`
+//	ResourceGroup    string                  `tfschema:"resource_group_name"`
+//	ExtendedLocation []ExtendedLocationModel `tfschema:"extended_location"`
+//	Kind             string                  `tfschema:"kind"`
+//	Location         string                  `tfschema:"location"`
+//	InventoryItemId  string                  `tfschema:"inventory_item_id"`
+//	MoRefId          string                  `tfschema:"mo_ref_id"`
+//	VCenterId        string                  `tfschema:"vcenter_id"`
+//	Tags             map[string]string       `tfschema:"tags"`
+//}
 
 type ExtendedLocationModel struct {
 	Name string `tfschema:"name"`
@@ -203,6 +203,19 @@ func ExpandExtendedLocation(input []ExtendedLocationModel) (*string, *string) {
 	}
 
 	return &locationName, &locationType
+}
+
+func FlattenExtendedLocation(locationName, locationType *string) []ExtendedLocationModel {
+	if locationName == nil && locationType == nil {
+		return nil
+	}
+
+	return []ExtendedLocationModel{
+		{
+			Name: *locationName,
+			Type: *locationType,
+		},
+	}
 }
 
 func ExpandCredential(input []CredentialModel) (*string, *string) {

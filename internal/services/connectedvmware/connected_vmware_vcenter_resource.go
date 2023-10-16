@@ -64,8 +64,8 @@ func (r VcenterResource) Arguments() map[string]*schema.Schema {
 
 		"extended_location": {
 			Type:     pluginsdk.TypeList,
-			Required: true,
 			MaxItems: 1,
+			Required: true,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*schema.Schema{
 					"name": {
