@@ -3,6 +3,8 @@ package connectedvmware
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/vcenters"
@@ -10,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
-	"time"
 )
 
 type VcenterResource struct{}

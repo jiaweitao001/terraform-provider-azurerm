@@ -3,12 +3,13 @@ package connectedvmware
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/hosts"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
-	"time"
 )
 
 type HostResource struct{}

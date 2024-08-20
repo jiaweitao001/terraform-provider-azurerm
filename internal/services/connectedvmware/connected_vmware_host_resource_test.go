@@ -3,6 +3,8 @@ package connectedvmware_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/hosts"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/acceptance"
@@ -10,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"testing"
 )
 
 type ConnectedVmwareHostResource struct{}

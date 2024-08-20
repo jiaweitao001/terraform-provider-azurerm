@@ -19,7 +19,20 @@ type ListByVCenterOperationResponse struct {
 }
 
 type ListByVCenterCompleteResult struct {
-	Items []InventoryItem
+	LatestHttpResponse *http.Response
+	Items              []InventoryItem
+}
+
+type ListByVCenterCustomPager struct {
+	NextLink *odata.Link `json:"nextLink"`
+}
+
+func (p *ListByVCenterCustomPager) NextPageLink() *odata.Link {
+	defer func() {
+		p.NextLink = nil
+	}()
+
+	return p.NextLink
 }
 
 // ListByVCenter ...
@@ -30,6 +43,7 @@ func (c InventoryItemsClient) ListByVCenter(ctx context.Context, id VCenterId) (
 			http.StatusOK,
 		},
 		HttpMethod: http.MethodGet,
+		Pager:      &ListByVCenterCustomPager{},
 		Path:       fmt.Sprintf("%s/inventoryItems", id.ID()),
 	}
 
@@ -71,6 +85,7 @@ func (c InventoryItemsClient) ListByVCenterCompleteMatchingPredicate(ctx context
 
 	resp, err := c.ListByVCenter(ctx, id)
 	if err != nil {
+		result.LatestHttpResponse = resp.HttpResponse
 		err = fmt.Errorf("loading results: %+v", err)
 		return
 	}
@@ -83,7 +98,8 @@ func (c InventoryItemsClient) ListByVCenterCompleteMatchingPredicate(ctx context
 	}
 
 	result = ListByVCenterCompleteResult{
-		Items: items,
+		LatestHttpResponse: resp.HttpResponse,
+		Items:              items,
 	}
 	return
 }

@@ -20,7 +20,20 @@ type ListOperationResponse struct {
 }
 
 type ListCompleteResult struct {
-	Items []Datastore
+	LatestHttpResponse *http.Response
+	Items              []Datastore
+}
+
+type ListCustomPager struct {
+	NextLink *odata.Link `json:"nextLink"`
+}
+
+func (p *ListCustomPager) NextPageLink() *odata.Link {
+	defer func() {
+		p.NextLink = nil
+	}()
+
+	return p.NextLink
 }
 
 // List ...
@@ -31,6 +44,7 @@ func (c DataStoresClient) List(ctx context.Context, id commonids.SubscriptionId)
 			http.StatusOK,
 		},
 		HttpMethod: http.MethodGet,
+		Pager:      &ListCustomPager{},
 		Path:       fmt.Sprintf("%s/providers/Microsoft.ConnectedVMwarevSphere/dataStores", id.ID()),
 	}
 
@@ -72,6 +86,7 @@ func (c DataStoresClient) ListCompleteMatchingPredicate(ctx context.Context, id 
 
 	resp, err := c.List(ctx, id)
 	if err != nil {
+		result.LatestHttpResponse = resp.HttpResponse
 		err = fmt.Errorf("loading results: %+v", err)
 		return
 	}
@@ -84,7 +99,8 @@ func (c DataStoresClient) ListCompleteMatchingPredicate(ctx context.Context, id 
 	}
 
 	result = ListCompleteResult{
-		Items: items,
+		LatestHttpResponse: resp.HttpResponse,
+		Items:              items,
 	}
 	return
 }

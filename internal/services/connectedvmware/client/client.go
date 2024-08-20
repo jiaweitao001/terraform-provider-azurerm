@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/clusters"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/datastores"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/connectedvmware/2023-10-01/hosts"
