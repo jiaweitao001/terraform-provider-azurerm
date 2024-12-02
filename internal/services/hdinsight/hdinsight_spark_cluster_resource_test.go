@@ -40,12 +40,12 @@ func TestAccHDInsightSparkCluster_basic(t *testing.T) {
 	})
 }
 
-func TestAccHDInsightSparkCluster_complete(t *testing.T) {
+func TestAccHDInsightSparkCluster_availabilityZones(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_hdinsight_spark_cluster", "test")
 	r := HDInsightSparkClusterResource{}
 	data.ResourceTest(t, r, []acceptance.TestStep{
 		{
-			Config: r.complete(data),
+			Config: r.availabilityZones(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
@@ -740,7 +740,7 @@ resource "azurerm_hdinsight_spark_cluster" "test" {
 `, r.template(data), data.RandomInteger)
 }
 
-func (r HDInsightSparkClusterResource) complete(data acceptance.TestData) string {
+func (r HDInsightSparkClusterResource) availabilityZones(data acceptance.TestData) string {
 	return fmt.Sprintf(`
 %s
 
@@ -795,6 +795,7 @@ resource "azurerm_subnet" "test" {
   address_prefixes     = ["172.16.11.0/26"]
 }
 
+<<<<<<< HEAD
 resource "azurerm_public_ip" "test" {
   name                = "acctestpip%d"
   location            = azurerm_resource_group.test.location
@@ -858,12 +859,19 @@ resource "azurerm_network_security_group" "test" {
 resource "azurerm_hdinsight_spark_cluster" "test" {
   depends_on = [azurerm_role_assignment.test, azurerm_nat_gateway.test, azurerm_subnet_network_security_group_association.test]
 
+=======
+resource "azurerm_hdinsight_spark_cluster" "test" {
+>>>>>>> e9ad034b5c (hdinsight_spark_cluster_resource: Add support for availability_zones)
   name                = "acctesthdi-%d"
   resource_group_name = azurerm_resource_group.test.name
   location            = azurerm_resource_group.test.location
   cluster_version     = "4.0"
   tier                = "Standard"
+<<<<<<< HEAD
   zones               = ["1"]
+=======
+  availability_zones  = ["1"]
+>>>>>>> e9ad034b5c (hdinsight_spark_cluster_resource: Add support for availability_zones)
 
   component_version {
     spark = "2.4"
@@ -881,8 +889,15 @@ resource "azurerm_hdinsight_spark_cluster" "test" {
     is_default                   = true
   }
 
-  network {
-    connection_direction = "Outbound"
+  private_link_configuration {
+    name     = "testconfig"
+    group_id = "headnode"
+    ip_configuration {
+      name                         = "testipconfig"
+      primary                      = false
+      private_ip_allocation_method = "dynamic"
+      subnet_id                    = azurerm_subnet.test.id
+    }
   }
 
   roles {
@@ -932,7 +947,7 @@ resource "azurerm_hdinsight_spark_cluster" "test" {
     }
   }
 }
-`, r.gen2template(data), data.RandomInteger, data.RandomInteger, data.RandomInteger, data.RandomInteger, data.RandomInteger, data.RandomInteger, data.RandomInteger)
+`, r.gen2template(data), data.RandomInteger, data.RandomInteger, data.RandomInteger, data.RandomInteger)
 }
 
 func (r HDInsightSparkClusterResource) gen2basic(data acceptance.TestData) string {
