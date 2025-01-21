@@ -25,6 +25,7 @@ func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		MonitorsResource{},
 		TagRulesResource{},
+		SingleSignOnResource{},
 	}
 }
 

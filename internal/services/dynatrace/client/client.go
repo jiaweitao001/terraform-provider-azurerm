@@ -5,6 +5,7 @@ package client
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/dynatrace/2023-04-27/singlesignon"
 
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dynatrace/2023-04-27/monitors"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dynatrace/2023-04-27/tagrules"
@@ -14,6 +15,7 @@ import (
 type Client struct {
 	*monitors.MonitorsClient
 	*tagrules.TagRulesClient
+	*singlesignon.SingleSignOnClient
 }
 
 func NewClient(o *common.ClientOptions) (*Client, error) {
@@ -29,8 +31,15 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	}
 	o.Configure(tagruleClient.Client, o.Authorizers.ResourceManager)
 
+	ssoClient, err := singlesignon.NewSingleSignOnClientWithBaseURI(o.Environment.ResourceManager)
+	if err != nil {
+		return nil, fmt.Errorf("building Dynatrace SingleSignOn client: %+v", err)
+	}
+	o.Configure(ssoClient.Client, o.Authorizers.ResourceManager)
+
 	return &Client{
-		MonitorsClient: monitorClient,
-		TagRulesClient: tagruleClient,
+		MonitorsClient:     monitorClient,
+		TagRulesClient:     tagruleClient,
+		SingleSignOnClient: ssoClient,
 	}, nil
 }
