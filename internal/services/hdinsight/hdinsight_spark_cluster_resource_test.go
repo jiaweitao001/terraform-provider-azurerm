@@ -1832,7 +1832,8 @@ resource "azurerm_key_vault" "test" {
       "Update",
       "SetRotationPolicy",
       "GetRotationPolicy",
-      "Rotate",
+	  "UnwrapKey",
+	  "WrapKey",
     ]
 
     secret_permissions = [
