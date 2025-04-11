@@ -1810,14 +1810,20 @@ func (r HDInsightSparkClusterResource) diskEncryption(data acceptance.TestData) 
 
 data "azurerm_client_config" "current" {}
 
+resource "azurerm_user_assigned_identity" "test" {
+  name                = "acctestidentity-%s"
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
+}
+
 resource "azurerm_key_vault" "test" {
-  name = "acctestkv-%s"
-  location                   = azurerm_resource_group.test.location
-  resource_group_name        = azurerm_resource_group.test.name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  name                        = "acctestkv-%s"
+  location                    = azurerm_resource_group.test.location
+  resource_group_name         = azurerm_resource_group.test.name
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
   enabled_for_disk_encryption = true
-  sku_name                   = "standard"
-  soft_delete_retention_days = 7
+  sku_name                    = "standard"
+  soft_delete_retention_days  = 7
 
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
@@ -1832,8 +1838,32 @@ resource "azurerm_key_vault" "test" {
       "Update",
       "SetRotationPolicy",
       "GetRotationPolicy",
-	  "UnwrapKey",
-	  "WrapKey",
+      "UnwrapKey",
+      "WrapKey",
+    ]
+
+    secret_permissions = [
+      "Delete",
+      "Get",
+      "Set",
+    ]
+  }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = azurerm_user_assigned_identity.test.principal_id
+
+    key_permissions = [
+      "Create",
+      "Delete",
+      "Get",
+      "Purge",
+      "Recover",
+      "Update",
+      "SetRotationPolicy",
+      "GetRotationPolicy",
+      "UnwrapKey",
+      "WrapKey",
     ]
 
     secret_permissions = [
@@ -1849,21 +1879,19 @@ resource "azurerm_key_vault" "test" {
 }
 
 resource "azurerm_key_vault_key" "test" {
-  name = "key-%s"
+  name         = "key-%s"
   key_vault_id = azurerm_key_vault.test.id
-  key_type    = "RSA"
-  key_size    = 2048
+  key_type     = "RSA"
+  key_size     = 2048
 
   key_opts = [
-	"sign",
-	"verify",
+    "sign",
+    "verify",
+    "encrypt",
+    "decrypt",
+    "wrapKey",
+    "unwrapKey",
   ]
-}
-
-resource "azurerm_user_assigned_identity" "test" {
-  name                = "acctestidentity-%s"
-  resource_group_name = azurerm_resource_group.test.name
-  location            = azurerm_resource_group.test.location
 }
 
 resource "azurerm_hdinsight_spark_cluster" "test" {
@@ -1891,8 +1919,10 @@ resource "azurerm_hdinsight_spark_cluster" "test" {
   }
 
   disk_encryption {
-	key_vault_key_id = azurerm_key_vault_key.test.id
-	key_vault_managed_identity_id = azurerm_user_assigned_identity.test.id
+    encryption_at_host            = true
+    encryption_algorithm          = "RSA-OAEP"
+    key_vault_key_id              = azurerm_key_vault_key.test.id
+    key_vault_managed_identity_id = azurerm_user_assigned_identity.test.id
   }
 
   roles {
