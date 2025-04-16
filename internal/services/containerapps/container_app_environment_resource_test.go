@@ -219,7 +219,7 @@ func TestAccContainerAppEnvironment_infraResourceGroup(t *testing.T) {
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
-		data.ImportStep(),
+		data.ImportStep("workload_profile"),
 	})
 }
 
@@ -234,7 +234,7 @@ func TestAccContainerAppEnvironment_infraResourceGroupWithoutName(t *testing.T) 
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
-		data.ImportStep(),
+		data.ImportStep("workload_profile"),
 	})
 }
 
