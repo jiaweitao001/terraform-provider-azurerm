@@ -273,9 +273,13 @@ type Client struct {
 	Storage                           *storage.Client
 	StorageCache                      *storagecache_2024_07_01.Client
 <<<<<<< HEAD
+<<<<<<< HEAD
 	StorageCache_2023_05_01           *storagecache_2023_05_01.Client
 =======
 >>>>>>> 880e1721bf (address comments)
+=======
+	StorageCache_2023_05_01           *storagecache_2023_05_01.Client
+>>>>>>> 4a8364fcb7 (hpc still use 2023-05-01)
 	StorageMover                      *storageMover.Client
 	StreamAnalytics                   *streamAnalytics.Client
 	Subscription                      *subscription.Client
