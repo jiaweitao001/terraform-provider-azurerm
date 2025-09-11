@@ -7,7 +7,7 @@ description: Complete implementation guide for Go files in the Terraform AzureRM
 
 This comprehensive guide covers all implementation requirements for the Terraform AzureRM provider.
 
-**Quick navigation:** [🏗️ Implementation Patterns](#🏗️-implementation-patterns) | [📏 Coding Standards](#📏-coding-standards) | [🎨 Coding Style](#🎨-coding-style) | [🔧 Azure SDK Integration](#🔧-azure-sdk-integration) | [💡 AI Coding Guidance](#💡-ai-coding-guidance) | [📚 Quick Reference](#quick-reference-links)
+**Quick navigation:** [🏗️ Implementation Patterns](#🏗️-implementation-patterns) | [📏 Coding Standards](#📏-coding-standards) | [🎨 Coding Style](#🎨-coding-style) | [🔧 Azure SDK Integration](#🔧-azure-sdk-integration) | [💡 AI Coding Guidance](#💡-ai-coding-guidance) | [📚 Specialized Guidance](#📚-specialized-guidance-on-demand)
 
 **🧠 SMART MEMORY MANAGEMENT:**
 - **Pattern Cache**: Keep these templates in active memory during implementation sessions
@@ -1029,6 +1029,15 @@ func resourceServiceName() *pluginsdk.Resource {
 - **Untyped Resources**: Use function-based patterns and `*schema.ResourceDiff` for field access
 - **Import Requirements**: Typed typically need dual imports, untyped often use single import
 - **Validation Style**: Typed validate against decoded models, untyped use `diff.Get()` patterns
+
+**🚨 CRITICAL: AI Schema Definition Verification Requirement**
+
+**BEFORE the AI suggests ANY field validation logic, the AI MUST verify the field's schema definition:**
+- **Required fields**: AI should suggest direct access (`diff.Get()`, `metadata.Decode()`)
+- **Optional fields**: AI should suggest `GetRawConfig().IsNull()` to check explicit configuration
+- **Optional+Computed fields**: AI should suggest distinguishing user-configured vs Azure-computed values
+
+**For comprehensive AI schema verification guidance, see:** [Schema Patterns - AI Schema Definition Verification](./schema-patterns.instructions.md#🚨-schema-definition-verification-before-field-validation)
 
 **For Azure-specific CustomizeDiff validation techniques including zero value handling patterns, see:** [Azure Patterns - Zero Value Validation](./azure-patterns.instructions.md#zero-value-validation-pattern)
 

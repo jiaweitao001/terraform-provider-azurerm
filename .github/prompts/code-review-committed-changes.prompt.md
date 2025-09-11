@@ -1,13 +1,40 @@
 ﻿---
 mode: agent
-description: "Code Review for Terraform AzureRM Provider Committed Changes"
+description: "Code Review Prompt for Terraform AzureRM Provider Committed Changes"
 ---
 
-## Code Review Expert: Terraform Provider Analysis and Best Practices
+# 🚀 **EXECUTE IMMEDIATELY** - Code Review Task
 
-As a principal Terraform provider engineer with expertise in Go development, Azure APIs, and HashiCorp Plugin SDK, perform a code review of the provided git diff for the Terraform AzureRM provider.
+**PRIMARY TASK**: Perform code review of committed changes for Terraform AzureRM provider
 
-Focus on delivering actionable feedback in the following areas:
+## ⚡ **START HERE - MANDATORY EXECUTION STEPS**
+
+**1. GET THE DIFF - Run these git commands immediately:**
+```powershell
+# Get branch and overview
+git branch --show-current
+git --no-pager diff --stat --no-prefix origin/main...HEAD
+
+# Get the focused diff for review (exclude generated/vendor files)
+git --no-pager diff --no-prefix origin/main...HEAD -- ":(exclude)vendor/**" ":(exclude)go.sum" ":(exclude)go.mod"
+
+# Get commit context
+git log --oneline origin/main..HEAD
+git status
+```
+
+**⚠️ IMPORTANT**: If the commands do not show any changes, abandon the code review and display: 
+**"☠️ Argh! Shiver me source files! This branch be cleaner than a swabbed deck! Push some code, Ye Lily-livered scallywag! ☠️"**
+
+**2. REVIEW THE CHANGES** - Apply expertise as principal Terraform provider engineer
+
+**3. PROVIDE STRUCTURED FEEDBACK** - Use the review format below
+
+---
+
+## 🎯 **CORE REVIEW MISSION**
+
+As a principal Terraform provider engineer with expertise in Go development, Azure APIs, and HashiCorp Plugin SDK, deliver actionable code review feedback.
 
 **Critical Issues**:
 - Security vulnerabilities in Azure authentication and API calls
@@ -25,15 +52,13 @@ Focus on delivering actionable feedback in the following areas:
 - Terraform resource implementation best practices
 - Azure SDK for Go usage patterns
 - Plugin SDK schema definitions and validation
-- CustomizeDiff function implementation patterns and conditional import requirements
+- CustomizeDiff function validation logic and patterns
 - Implementation approach appropriateness (Typed for new, Untyped maintenance only)
 - Error handling and context propagation
 - Resource timeout configurations
 - Acceptance test coverage and quality
 - **Tests use ONLY ExistsInAzure() check with ImportStep() - NO redundant field validation**
-- **CRITICAL: Code comments policy enforcement - only Azure API quirks, complex business logic, or SDK workarounds**
-- **Comment justification requirement - all comments must have explicit reasoning documented**
-- **No comments on obvious operations, standard patterns, or self-explanatory code**
+- **CRITICAL: Code comments policy enforcement - Comments only for Azure API quirks, complex business logic, or SDK workarounds that cannot be expressed through code structure**
 
 **Azure-Specific Concerns**:
 - Azure API version compatibility
@@ -53,286 +78,138 @@ Focus on delivering actionable feedback in the following areas:
 - Resource import state handling
 - Documentation and example completeness
 
-**Provide specific recommendations with**:
-- Go code examples for suggested improvements
-- References to Terraform Plugin SDK documentation
-- Azure API documentation references
-- Rationale for suggested changes considering Azure service behavior
-- Impact assessment on existing Terraform configurations
+---
 
-Format your review using clear sections and bullet points. Include inline code references where applicable.
+##  **REVIEW OUTPUT FORMAT**
 
-**Note**: This review should comply with the HashiCorp Terraform Provider development guidelines and Azure resource management best practices.
-
-## Constraints
-* Before you start the code review, please explicitly check off each item in the MANDATORY PRE-REVIEW CHECKLIST and show me your verification.
-* Only flag corruption issues IF `read_file` shows the same problems as the git diff. If `read_file` shows clean content, acknowledge console wrapping.
-
-For any suspected issues, you **MUST** use this exact format:
-- **Suspected Issue**: [describe]
-- **Verification Command**: read_file
-- **Actual File Content**: [paste results]
-- **Assessment**: [`console wrapping` **OR** `actual issue`]
-- **Action**: [required]"
-
-This prompt file contains its own **verification protocols**. You **MUST** follow those protocols when reviewing this very file. Do not create exceptions for reviewing prompt files themselves.
-If you flag **false positives** without proper verification, **STOP** and **RESTART** following the checklist correctly.
-
-**Priority order for file verification:**
-1. read_file (most reliable)
-2. Direct file access tools
-3. Terminal commands (least reliable for content verification)
-
-Follow the `code-review-local-changes.prompt.md` instructions. Before flagging **ANY** issues:
-
-1. Check off each mandatory checklist item
-2. Use `read_file` **FIRST** for any suspected corruption
-3. Use the mandatory verification template format
-4. Only flag issues that exist in `read_file` output
-5. If `read_file` shows clean content but terminal shows issues, acknowledge console wrapping
-
-**Show me your checklist verification before proceeding with the review.**
-
-## 🔍 **MANDATORY PRE-REVIEW CHECKLIST**
-
-**BEFORE FLAGGING ISSUES:**
 ```markdown
-- [ ] I will verify actual file content first with `cat` or `Get-Content`
-- [ ] I understand: Git diff wrapping ≠ File corruption
-- [ ] I will NOT assume formatting in diff = actual problems
+# 📋 **Code Review**: ${change_description}
 
-RULE: Always verify file content before flagging corruption
-```
-**ONLY PROCEED AFTER CHECKING ALL BOXES ABOVE**
+## 📊 **CHANGE SUMMARY**
+- **Files Changed**: [number] files ([additions], [modifications], [deletions])
+- **Scale**: [insertions] insertions, [deletions] deletions
+- **Branch**: [current_branch_from_git_command] vs origin/main
+- **Scope**: [Brief description of overall scope]
 
-### **AUTOMATIC VERIFICATION TRIGGERS**
+## 🎯 **PRIMARY CHANGES ANALYSIS**
+[Overview of the code changes and purpose]
 
-**IF YOU SEE ANY OF THESE IN GIT DIFF, IMMEDIATELY RUN FILE VERIFICATION:**
+## 📋 **DETAILED TECHNICAL REVIEW**
 
-- ❌ `Git` diff formatting issues
-- ❌ `emoji` display as `??`
-- ❌ Line breaks in `diff`
-- ❌ Fragmented text in `diff`
+### 🟢 **STRENGTHS**
+[List positive aspects and well-implemented features]
 
-**FILE VERIFICATION COMMANDS:**
-* **Unix/Linux/macOS**: `sed -n "[line-5],[line+5]p" filename`
-* **Windows PowerShell**: `Get-Content "filename" | Select-Object -Skip [line-5] -First 10`
-* **Windows Command Prompt**: `more +[line-5] filename | head -10` (if available)
+### 🟡 **OBSERVATIONS** 
+[List areas for consideration or minor improvements]
 
-### 📋 **MANDATORY VERIFICATION TEMPLATE**
+### 🔴 **ISSUES** (if any)
+[List ONLY actual problems that need to be fixed - bugs, errors, violations, missing requirements, typos, misspellings, improper pointer handling, incorrect SDK usage, using deprecated utilities, etc. Do NOT include observations about what was done correctly or opinions about changes that are already implemented properly]
 
-When suspicious content is found, use this template:
+## ✅ **RECOMMENDATIONS**
 
-- **Suspected Issue**: [describe what looks wrong in git diff]
-- **Verification Command**: `cat 'filename'`
-  - Windows PowerShell: `Get-Content 'filename'`
-- **Actual File Content**: [paste verification results]
-- **Assessment**: [console wrapping **OR** actual issue]
-- **Action**: [no action needed **OR** specific fix required]
+### 🎯 **IMMEDIATE**
+[Critical actions needed before merge]
 
-### 🔍 **VERIFICATION SCENARIO EXAMPLES**
+### 🔄 **FUTURE CONSIDERATIONS**
+[Improvements for future iterations]
 
-**Scenario 1: Emoji Display Issues**
-```text
-Git diff shows: 🔍 COMMITTED CHANGES CODE REVIEW 🔍
-Reality: Emojis display as ?? in some terminals but are actually valid
-Action: Use read_file to verify actual content exists
-Result: Console display issue, not file corruption
-```
+## 🏆 **OVERALL ASSESSMENT**
+[Final recommendation with confidence level]
 
-**Scenario 2: JSON/YAML Line Breaking**
-```json
-Git diff shows:
-{
-    "prop": (appears incomplete)
-}
+---
 
-Reality: File contains valid JSON with complete property
-Action: Use read_file to verify JSON structure
-Result: Console wrapping, not malformed JSON
+## Individual Suggestions Format:
+
+## ${🔧/❓/⛏️/♻️/🤔/🚀/ℹ️/📌} ${Review Type}: ${Summary}
+* **Priority**: ${🔥/🔴/🟡/🔵/⭐/✅}
+* **File**: ${relative/path/to/file}
+* **Details**: Clear explanation
+* **Azure Context** (if applicable): Service behavior reference
+* **Terraform Impact** (if applicable): Configuration/state effects  
+* **Suggested Change** (if applicable): Code snippet
+
+# Summary
+Concise assessment and any follow-up items.
 ```
 
-**Scenario 3: Text Mid-Word Fragmentation**
-```text
-Git diff shows:
-configur
-ation (word split across lines)
+**Priority System:** 🔥 Critical → 🔴 High → 🟡 Medium → 🔵 Low → ⭐ Notable → ✅ Good
 
-Reality: File contains "configuration" as complete word
-Action: Use read_file to verify word integrity
-Result: Console wrapping, not text corruption
+**Review Type Emojis:**
+* 🔧 Change request - Functional issues requiring fixes
+* ❓ Question - Clarification needed about design decisions
+* ⛏️ Nitpick - Minor style/consistency issues (typos, formatting, naming)
+* ♻️ Refactor suggestion - Structural code improvements
+* 🤔 Thought/concern - Design or approach concerns requiring discussion
+* 🚀 Positive feedback - Excellent implementations worth highlighting
+* ℹ️ Explanatory note - Technical context or background information
+* 📌 Future consideration - Larger scope items for follow-up
+
+---
+
+# 📚 **APPENDIX: EDGE CASE HANDLING** *(Secondary Guidelines)*
+
+## Console Line Wrapping Detection *(If Needed)*
+
+**⚠️ ONLY IF git diff content appears corrupted:**
+- Use `read_file filename` to verify actual content  
+- Note: `*(Verified: console wrapping - content clean)*`
+- Continue with technical review
+
+**Console artifacts are normal** - Focus on delivering valuable code review feedback.
+
+## Git Requirements
+
+**Git Commands to Execute:**
+```powershell
+git branch --show-current
+git --no-pager diff --stat --no-prefix origin/main...HEAD  
+git --no-pager diff --no-prefix origin/main...HEAD
+git log --oneline origin/main..HEAD
+git status
 ```
 
-**Scenario 4: Missing Quotes/Brackets**
-```yaml
-Git diff shows:
-name: example (appears missing quotes)
+**If no changes found:** 
+**"☠️ Argh! Shiver me source files! This branch be cleaner than a swabbed deck! Push some code, Ye Lily-livered scallywag! ☠️"**
 
-Reality: File contains proper YAML syntax with quotes
-Action: Use read_file to verify closing quote is present
-Result: Console wrapping, not syntax error
+## Verification Protocol *(Edge Cases Only)*
+
+**When to verify:**
+- Text breaks mid-word without logical reason
+- Missing quotes/brackets that don't make contextual sense  
+- Emojis appear as `??`
+- JSON/YAML looks syntactically broken
+
+**Verification format:**
+```markdown
+*(Verified: console wrapping - actual content clean)*
 ```
 
-**Scenario 5: Code Block Fragmentation**
-```go
-Git diff shows:
-func Create (appears incomplete function)
+## Review Scope Expansion
 
-Reality: File contains complete Go function definition
-Action: Use read_file to verify complete code block
-Result: Console display issue, not code corruption
-```
+**Beyond diff changes, also check:**
+- Spelling and grammar in visible text
+- Command examples accuracy
+- Naming consistency
+- Professional language standards
 
-## Console Output Interpretation
+## Comprehensive Quality Guidelines
 
-**🚨 CRITICAL: CONSOLE LINE WRAPPING DETECTION POLICY 🚨**
+- **Code Comments Policy**: Comments only for Azure API quirks, complex business logic, or SDK workarounds that cannot be expressed through code structure
+- **Comment Quality**: All comments must have clear justification and add genuine value beyond code structure
+- **Refactoring Preference**: Consider if code restructuring could eliminate need for comments
+- **Documentation Standards**: 
+  - Spelling accuracy in all text content
+  - Grammar and syntax correctness  
+  - Consistent terminology and naming
+  - Professional language standards
 
-**CONSOLE LINE WRAPPING WARNING**: When reviewing `git` diff output in terminal/console, be aware that long lines may wrap and appear malformed. Always verify actual file content for syntax validation, especially for `JSON`, `YAML`, or structured data files. Console wrapping can make valid syntax appear broken.
+## Provider-Specific Excellence
 
-**VERIFICATION PROTOCOL FOR SUSPECTED ISSUES**:
-### 🔍 **MANDATORY VERIFICATION STEPS:**
-1. **STOP** - If text appears broken/fragmented, this is likely console wrapping
-2. **VERIFY** - Use `cat filename` to check actual file content
-  - Windows PowerShell: `Get-Content 'filename'`
-3. **VALIDATE** - For `JSON`/structured files: `jq "." file.json`
-  - Windows PowerShell: `Get-Content file.json | ConvertFrom-Json`
+- **Testing Standards**: ExistsInAzure() + ImportStep() only, no redundant field validation
+- **CustomizeDiff Patterns**: Correct imports based on implementation type  
+- **Azure Patterns**: PATCH operations, "None" value handling, SDK integration
+- **Implementation Approach**: Typed for new resources, Untyped for maintenance only
 
-### 🚨 **CONSOLE WRAPPING RED FLAGS:** 🚨
-- ❌ Text breaks mid-sentence or mid-word without logical reason
-- ❌ Missing closing quotes/brackets that don't make sense contextually
-- ❌ Fragmented lines that appear to continue elsewhere in the diff
-- ❌ Content looks syntactically invalid but conceptually correct
-- ❌ Long lines in git diff output that suddenly break
+---
 
-### ✅ **GOLDEN RULE**: If actual file content is valid → acknowledge console wrapping → DO NOT FLAG as corruption
-
-> **📖 Full Policy Details**: See the complete [Console Line Wrapping Detection Policy](../instructions/error-patterns.instructions.md) for comprehensive guidelines and enforcement procedures.
-
-**Verification Rule**: If actual file content is valid, acknowledge console wrapping and do not flag as an issue
-
-**Git Command Requirements:**
-* `Git` must be installed and available in `PATH`
-* Windows: `Git for Windows` or `Git` integrated with `PowerShell`
-* Verify `git` availability: `git --version`
-
-* **IMPORTANT**: Use the following git commands to get the diff for the code branch committed changes for code review (try in order):
-  1. `git --no-pager diff --stat --no-prefix origin/main...HEAD` - Show a summary of changes (files and line counts) vs. `origin/main`
-  2. `git --no-pager diff --no-prefix origin/main...HEAD` - Show the full unified diff (code-level changes) vs. `origin/main`
-  3. `git log --oneline origin/main..HEAD` - Show commit messages in this branch not in `origin/main`
-  4. `git status` - Show the working directory status (staged, modified, untracked files)
-  5. **If the commands do not show any changes, abandon the code review** - this prompt is specifically for reviewing committed changes. When abandoning, display: "☠️ **Argh! Shiver me source files! This branch be cleaner than a swabbed deck! Push some code, Ye Lily-livered scallywag!** ☠️"
-
-* In the provided git diff, if the line start with `+` or `-`, it means that the line is added or removed. If the line starts with a space, it means that the line is unchanged. If the line starts with `@@`, it means that the line is a hunk header.
-* Avoid overwhelming the developer with too many suggestions at once.
-* Use clear and concise language to ensure understanding.
-* Focus on Terraform provider-specific concerns and Go best practices.
-* Pay special attention to Azure API integration patterns and error handling.
-* Consider the impact on existing Terraform configurations and state management.
-* If there are any TODO comments, make sure to address them in the review.
-
-* Use markdown for each suggestion:
-
-    ```markdown
-    # 📋 Code Review for ${change_description}
-
-    ## 📊 **CHANGE SUMMARY**
-    - **Files Changed**: [number] files ([additions], [modifications], [deletions])
-    - **Scale**: [insertions] insertions, [deletions] deletions
-    - **Branch**: [branch] vs [base_branch]
-    - **Scope**: [Brief description of overall scope]
-
-    ## 🎯 **PRIMARY CHANGES ANALYSIS**
-
-    [Overview of the code changes, including the purpose of the implementation, any relevant context about the Azure service or infrastructure changes, and the files involved.]
-
-    ## 📋 **DETAILED TECHNICAL REVIEW**
-
-    ### 🟢 **STRENGTHS**
-    [List positive aspects and well-implemented features]
-
-    ### 🟡 **OBSERVATIONS**
-    [List areas for consideration or minor improvements]
-
-    ### 🔴 **ISSUES** (if any)
-    [List any problems that need to be addressed]
-
-    ## ✅ **RECOMMENDATIONS**
-
-    ### 🎯 **IMMEDIATE**
-    [Critical actions needed before merge]
-
-    ### 🔄 **FUTURE CONSIDERATIONS**
-    [Improvements for future iterations]
-
-    ## 🏆 **OVERALL ASSESSMENT**
-
-    [Final recommendation with confidence level]
-
-    ---
-
-    ## Individual Suggestions (if needed):
-
-    ## ${code_review_emoji} ${Summary of the suggestion, include necessary context to understand suggestion}
-    * **Priority**: ${priority: (🔥/🔴/🟡/🔵/✅)}
-    * **File**: ${relative/path/to/file}
-    * **Details**: ...
-    * **Azure Context** (if applicable): Reference to Azure service behavior or API documentation
-    * **Terraform Impact** (if applicable): How this affects Terraform configurations or state
-    * **Example** (if applicable): ...
-    * **Suggested Change** (if applicable): (Go code snippet...)
-
-    ## (other suggestions...)
-    ...
-
-    # Summary
-    ```
-
-* Use the following emojis to indicate the priority of the suggestions:
-    * 🔥 Critical
-    * 🔴 High
-    * 🟡 Medium
-    * 🔵 Low (needs attention)
-    * ✅ Positive feedback (good work, no action needed)
-
-* Each suggestion should be prefixed with an emoji to indicate the type of suggestion:
-    * 🔧 Change request
-    * ❓ Question
-    * ⛏️ Nitpick
-    * ♻️ Refactor suggestion
-    * 🤔 Thought process or concern
-    * 🚀 Positive feedback
-    * ℹ️ Explanatory note or fun fact
-    * 📌 Observation for future consideration
-
-* Always use file paths
-
-### Use Code Review Emojis
-
-Use code review emojis. Give the reviewee added context and clarity to follow up on code review. For example, knowing whether something really requires action (🔧), highlighting nit-picky comments (⛏️), flagging out of scope items for follow-up (📌)
-
-### Emoji Legend
-
-| `Emoji` |      `:code:`        | `Meaning`                                                                                               |
-| :-----: | :------------------: | ------------------------------------------------------------------------------------------------------- |
-|   🔧   |     `:wrench:`       | Use when this needs to be changed. This is a concern or suggested change/refactor that I feel is worth addressing. |
-|   ❓   |    `:question:`      | Use when you have a question. This should be a fully formed question with sufficient information and context that requires aresponse. |
-|   ⛏️   |      `:pick:`        | This is a nitpick. This does not require any changes and is often better left unsaid. |
-|   ♻️   |     `:recycle:`      | Suggestion for refactoring. Should include enough context to be actionable and not be considered a  |
-|   🤔   |     `:thinking:`     | Express concern, suggest an alternative solution, or walk through the code in my own words to make sure I understand. |
-|   🚀   |     `:rocket:`       | Let the author know that you really liked something! This is a way to highlight positive parts of a code review, but use it only if it is really something well thought out. |
-|   ℹ️   |`:information_source:`| This is an explanatory note, fun fact, or relevant commentary that does not require any action. |
-|   📌   |     `:pushpin:`      | An observation or suggestion that is not a change request, but may have larger implications. Generally something to keep in mind for the future. |
-
-### Terraform Provider Specific Review Points
-
-When reviewing Terraform AzureRM provider code, pay special attention to:
-
-- **Code Comments Policy**: Apply strict zero-tolerance policy for unnecessary comments
-- **CustomizeDiff Import Requirements**: Verify correct import patterns based on implementation type
-- **Resource Implementation**: Ensure proper CRUD operations, schema validation, and Azure patterns
-- **Azure API Integration**: Check error handling, polling, and authentication patterns
-- **State Management**: Verify drift detection, import functionality, and resource ID handling
-- **Testing Standards**: Ensure comprehensive acceptance tests and proper cleanup
-- **Documentation Quality**: Verify examples, attributes, and import documentation
-
-**📋 For detailed enforcement guidelines, see: [Code Clarity Enforcement](../instructions/code-clarity-enforcement.instructions.md)**
+**REMEMBER: PRIMARY MISSION is to deliver actionable technical feedback. All appendix items are secondary safeguards.**
