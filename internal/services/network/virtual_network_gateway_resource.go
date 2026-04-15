@@ -976,7 +976,7 @@ func resourceVirtualNetworkGatewayUpdate(d *pluginsdk.ResourceData, meta interfa
 	}
 
 	if d.HasChanges("minimum_scale_unit", "maximum_scale_unit") || d.HasChange("sku") {
-		payload.Properties.AutoScaleConfiguration = nil
+		payload.Properties.AutoScaleConfiguration = &virtualnetworkgateways.VirtualNetworkGatewayAutoScaleConfiguration{}
 		rawConfig := d.GetRawConfig().AsValueMap()
 		if !rawConfig["minimum_scale_unit"].IsNull() {
 			payload.Properties.AutoScaleConfiguration = expandVirtualNetworkGatewayAutoScaleConfiguration(d)
