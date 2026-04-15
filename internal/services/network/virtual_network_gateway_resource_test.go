@@ -1811,14 +1811,6 @@ resource "azurerm_subnet" "test" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-resource "azurerm_public_ip" "test" {
-  name                = "acctestpip1-%d"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
 resource "azurerm_virtual_network_gateway" "test" {
   name                = "acctestvng-%d"
   location            = azurerm_resource_group.test.location
@@ -1831,10 +1823,9 @@ resource "azurerm_virtual_network_gateway" "test" {
   ip_configuration {
     private_ip_address_allocation = "Dynamic"
     subnet_id                     = azurerm_subnet.test.id
-    public_ip_address_id          = azurerm_public_ip.test.id
   }
 }
-`, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger, data.RandomInteger)
+`, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
 }
 
 func (VirtualNetworkGatewayResource) generation(data acceptance.TestData, generation string) string {
