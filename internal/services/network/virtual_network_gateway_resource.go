@@ -975,8 +975,12 @@ func resourceVirtualNetworkGatewayUpdate(d *pluginsdk.ResourceData, meta interfa
 		payload.Properties.AllowVirtualWanTraffic = pointer.To(d.Get("virtual_wan_traffic_enabled").(bool))
 	}
 
-	if d.HasChanges("minimum_scale_unit", "maximum_scale_unit") {
-		payload.Properties.AutoScaleConfiguration = expandVirtualNetworkGatewayAutoScaleConfiguration(d)
+	if d.HasChanges("minimum_scale_unit", "maximum_scale_unit") || d.HasChange("sku") {
+		payload.Properties.AutoScaleConfiguration = nil
+		rawConfig := d.GetRawConfig().AsValueMap()
+		if !rawConfig["minimum_scale_unit"].IsNull() {
+			payload.Properties.AutoScaleConfiguration = expandVirtualNetworkGatewayAutoScaleConfiguration(d)
+		}
 	}
 
 	if d.HasChange("tags") {
