@@ -642,6 +642,7 @@ func resourceVirtualNetworkGateway() *pluginsdk.Resource {
 			"maximum_scale_unit": {
 				Type:         pluginsdk.TypeInt,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 40),
 				RequiredWith: []string{"maximum_scale_unit", "minimum_scale_unit"},
 			},
@@ -649,6 +650,7 @@ func resourceVirtualNetworkGateway() *pluginsdk.Resource {
 			"minimum_scale_unit": {
 				Type:         pluginsdk.TypeInt,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validation.IntBetween(1, 40),
 				RequiredWith: []string{"maximum_scale_unit", "minimum_scale_unit"},
 			},
@@ -706,13 +708,21 @@ func resourceVirtualNetworkGatewayCustomizeDiff(ctx context.Context, d *pluginsd
 	maxScaleUnit := d.Get("maximum_scale_unit").(int)
 	sku := d.Get("sku").(string)
 
-	if sku == string(virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale) {
-		if minScaleUnit == 0 || maxScaleUnit == 0 {
-			return fmt.Errorf("`minimum_scale_unit` and `maximum_scale_unit` must be set when `sku` is `%s`", virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale)
+	if features.FivePointOh() {
+		if sku == string(virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale) {
+			if minScaleUnit == 0 || maxScaleUnit == 0 {
+				return fmt.Errorf("`minimum_scale_unit` and `maximum_scale_unit` must be set when `sku` is `%s`", virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale)
+			}
 		}
 	}
 
-	if minScaleUnit > 0 {
+	// Use RawConfig to determine if the user explicitly set the scale unit fields,
+	// since these are Optional+Computed and d.Get() returns API-stored values from state
+	rawConfig := d.GetRawConfig().AsValueMap()
+	minIsSet := !rawConfig["minimum_scale_unit"].IsNull()
+	maxIsSet := !rawConfig["maximum_scale_unit"].IsNull()
+
+	if minIsSet || maxIsSet {
 		if sku != string(virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale) {
 			return fmt.Errorf("`minimum_scale_unit` and `maximum_scale_unit` are only supported when `sku` is set to `%s`", virtualnetworkgateways.VirtualNetworkGatewaySkuNameErGwScale)
 		}
