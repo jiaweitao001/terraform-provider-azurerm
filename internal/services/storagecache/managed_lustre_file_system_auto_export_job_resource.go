@@ -36,7 +36,7 @@ func (r ManagedLustreFileSystemAutoExportJobResource) Attributes() map[string]*p
 	return map[string]*pluginsdk.Schema{}
 }
 
-func (r ManagedLustreFileSystemAutoExportJobResource) ModelObject() interface{} {
+func (r ManagedLustreFileSystemAutoExportJobResource) ModelObject() any {
 	return &ManagedLustreFileSystemAutoExportJobModel{}
 }
 
@@ -188,7 +188,7 @@ func (r ManagedLustreFileSystemAutoExportJobResource) Read() sdk.ResourceFunc {
 
 func (r ManagedLustreFileSystemAutoExportJobResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
-		Timeout: 90 * time.Minute,
+		Timeout: 120 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.StorageCache.AutoExportJobs
 			id, err := autoexportjobs.ParseAutoExportJobID(metadata.ResourceData.Id())
@@ -269,20 +269,31 @@ func waitForImportJobsToComplete(ctx context.Context, client *importjobs.ImportJ
 		Target:     []string{"Complete"},
 		MinTimeout: 30 * time.Second,
 		Timeout:    time.Until(deadline),
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			resp, err := client.ListByAmlFilesystemComplete(ctx, fsId)
 			if err != nil {
 				return nil, "", fmt.Errorf("listing import jobs for %s: %+v", fsId, err)
 			}
 
 			for _, job := range resp.Items {
-				if job.Properties != nil && job.Properties.ProvisioningState != nil {
-					state := *job.Properties.ProvisioningState
-					if state == importjobs.ImportJobProvisioningStateTypeCreating ||
-						state == importjobs.ImportJobProvisioningStateTypeUpdating ||
-						state == importjobs.ImportJobProvisioningStateTypeDeleting {
-						log.Printf("[DEBUG] Import job %q is in state %q, waiting...", pointer.From(job.Name), string(state))
-						return resp, "InProgress", nil
+				if job.Properties != nil {
+					if job.Properties.ProvisioningState != nil {
+						provisioningState := *job.Properties.ProvisioningState
+						if provisioningState == importjobs.ImportJobProvisioningStateTypeCreating ||
+							provisioningState == importjobs.ImportJobProvisioningStateTypeUpdating ||
+							provisioningState == importjobs.ImportJobProvisioningStateTypeDeleting {
+							log.Printf("[DEBUG] Import job %q has provisioning state %q, waiting...", pointer.From(job.Name), string(provisioningState))
+							return resp, "InProgress", nil
+						}
+					}
+
+					if job.Properties.Status != nil && job.Properties.Status.State != nil {
+						statusState := *job.Properties.Status.State
+						if statusState == importjobs.ImportStatusTypeInProgress ||
+							statusState == importjobs.ImportStatusTypeCancelling {
+							log.Printf("[DEBUG] Import job %q has status state %q, waiting...", pointer.From(job.Name), string(statusState))
+							return resp, "InProgress", nil
+						}
 					}
 				}
 			}

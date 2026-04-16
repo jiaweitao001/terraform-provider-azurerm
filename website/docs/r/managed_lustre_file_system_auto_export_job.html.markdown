@@ -193,7 +193,7 @@ The `timeouts` block allows you to specify [timeouts](https://developer.hashicor
 * `create` - (Defaults to 2 hours) Used when creating the Azure Managed Lustre File System Auto Export Job.
 * `read` - (Defaults to 5 minutes) Used when retrieving the Azure Managed Lustre File System Auto Export Job.
 * `update` - (Defaults to 2 hours) Used when updating the Azure Managed Lustre File System Auto Export Job.
-* `delete` - (Defaults to 90 minutes) Used when deleting the Azure Managed Lustre File System Auto Export Job.
+* `delete` - (Defaults to 2 hours) Used when deleting the Azure Managed Lustre File System Auto Export Job.
 
 ## Import
 
