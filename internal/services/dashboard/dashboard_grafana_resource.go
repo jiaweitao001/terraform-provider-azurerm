@@ -207,14 +207,11 @@ func (r DashboardGrafanaResource) Arguments() map[string]*pluginsdk.Schema {
 		},
 
 		"sku_size": {
-			Type:     pluginsdk.TypeString,
-			Optional: true,
-			Default:  managedgrafanas.SizeXOne,
-			ForceNew: true,
-			ValidateFunc: validation.StringInSlice([]string{
-				string(managedgrafanas.SizeXOne),
-				string(managedgrafanas.SizeXTwo),
-			}, false),
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			Default:      managedgrafanas.SizeXOne,
+			ForceNew:     true,
+			ValidateFunc: validation.StringInSlice(managedgrafanas.PossibleValuesForSize(), false),
 		},
 
 		"tags": commonschema.Tags(),
@@ -512,7 +509,7 @@ func (r DashboardGrafanaResource) Read() sdk.ResourceFunc {
 			if model.Sku != nil {
 				state.Sku = model.Sku.Name
 				if model.Sku.Size != nil {
-					state.SkuSize = string(pointer.From(model.Sku.Size))
+					state.SkuSize = pointer.FromEnum(model.Sku.Size)
 				}
 			}
 

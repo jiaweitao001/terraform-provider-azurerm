@@ -67,7 +67,7 @@ The following arguments are supported:
 
 * `sku` - (Optional) The name of the SKU used for the Grafana instance. Possible values are `Standard` and `Essential`. Defaults to `Standard`. Changing this forces a new Dashboard Grafana to be created.
 
-* `sku_size` - (Optional) The size of the SKU used for the Grafana instance. Possible values are `X1` and `X2`. Changing this forces a new Dashboard Grafana to be created.
+* `sku_size` - (Optional) The size of the SKU used for the Grafana instance. Possible values are `X1` and `X2`. Defaults to `X1`. Changing this forces a new Dashboard Grafana to be created.
 
 * `tags` - (Optional) A mapping of tags which should be assigned to the Dashboard Grafana.
 
