@@ -431,7 +431,6 @@ func TestAccContainerAppEnvironment_infraResourceGroupWithConsumptionWorkloadPro
 	})
 }
 
-
 func (r ContainerAppEnvironmentResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := managedenvironments.ParseManagedEnvironmentID(state.ID)
 	if err != nil {
@@ -1331,8 +1330,6 @@ resource "azurerm_container_app_environment" "test" {
     name                  = "Consumption"
     workload_profile_type = "Consumption"
   }
-
-  zone_redundancy_enabled = true
 
   tags = {
     Foo    = "Bar"
