@@ -94,14 +94,34 @@ resource "azurerm_container_app_custom_domain" "example" {
 ## Example Usage - Managed Certificate
 
 ```hcl
-resource "azurerm_container_app_custom_domain" "example" {
+# Step 1: Add the custom domain without certificate binding
+resource "azurerm_container_app_custom_domain" "setup" {
   name             = trimsuffix(trimprefix(azurerm_dns_txt_record.api.fqdn, "asuid."), ".")
   container_app_id = azurerm_container_app.example.id
 
+  depends_on = [azurerm_dns_cname_record.example, azurerm_dns_txt_record.api]
+
   lifecycle {
-    // When using an Azure created Managed Certificate these values must be added to ignore_changes to prevent resource recreation.
-    ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
+    ignore_changes = [certificate_binding_type, container_app_environment_certificate_id, container_app_environment_managed_certificate_id]
   }
+}
+
+# Step 2: Create the managed certificate
+resource "azurerm_container_app_environment_managed_certificate" "example" {
+  name                         = "example-managed-cert"
+  container_app_environment_id = azurerm_container_app_environment.example.id
+  subject_name                 = trimsuffix(trimprefix(azurerm_dns_txt_record.api.fqdn, "asuid."), ".")
+  domain_control_validation    = "CNAME"
+
+  depends_on = [azurerm_container_app_custom_domain.setup]
+}
+
+# Step 3: Bind the managed certificate to the custom domain
+resource "azurerm_container_app_custom_domain" "example" {
+  name                                             = trimsuffix(trimprefix(azurerm_dns_txt_record.api.fqdn, "asuid."), ".")
+  container_app_id                                 = azurerm_container_app.example.id
+  container_app_environment_managed_certificate_id = azurerm_container_app_environment_managed_certificate.example.id
+  certificate_binding_type                         = "SniEnabled"
 }
 
 ```
@@ -118,17 +138,17 @@ The following arguments are supported:
 
 * `container_app_environment_certificate_id` - (Optional) The ID of the Container App Environment Certificate to use. Changing this forces a new resource to be created.
 
--> **Note:** Omit this value if you wish to use an Azure Managed certificate. You must create the relevant DNS verification steps before this process will be successful.
+~> **Note:** Exactly one of `container_app_environment_certificate_id` and `container_app_environment_managed_certificate_id` may be specified.
 
-* `certificate_binding_type` - (Optional) The Certificate Binding type. Possible values are `Auto`, `Disabled` and `SniEnabled`. Required with `container_app_environment_certificate_id`. Changing this forces a new resource to be created.
+-> **Note:** Omit both certificate ID fields if you wish to add the custom domain without certificate binding initially (e.g., before creating a managed certificate).
 
-!> **Note:** If using an Azure Managed Certificate `container_app_environment_certificate_id` and `certificate_binding_type` should be added to `ignore_changes` to prevent resource recreation due to these values being modified asynchronously outside of Terraform.
+* `container_app_environment_managed_certificate_id` - (Optional) The ID of the Container App Environment Managed Certificate to use. Changing this forces a new resource to be created.
+
+* `certificate_binding_type` - (Optional) The Certificate Binding type. Possible values are `Auto`, `Disabled` and `SniEnabled`. Required with `container_app_environment_certificate_id` or `container_app_environment_managed_certificate_id`. Changing this forces a new resource to be created.
 
 ## Attributes Reference
 
 In addition to the Arguments listed above - the following Attributes are exported:
-
-* `container_app_environment_managed_certificate_id` - The ID of the Container App Environment Managed Certificate to use.
 
 ## Timeouts
 

@@ -172,17 +172,42 @@ provider azurerm {
 
 %s
 
-resource "azurerm_container_app_custom_domain" "test" {
+resource "azurerm_dns_cname_record" "test" {
+  name                = "acctest-capp%[2]d"
+  resource_group_name = data.azurerm_dns_zone.test.resource_group_name
+  zone_name           = data.azurerm_dns_zone.test.name
+  ttl                 = 300
+  record              = azurerm_container_app.test.ingress[0].fqdn
+}
+
+resource "azurerm_container_app_custom_domain" "setup" {
   name             = trimprefix(azurerm_dns_txt_record.test.fqdn, "asuid.")
   container_app_id = azurerm_container_app.test.id
 
+  depends_on = [azurerm_dns_cname_record.test]
+
   lifecycle {
-    ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
+    ignore_changes = [certificate_binding_type, container_app_environment_certificate_id, container_app_environment_managed_certificate_id]
   }
 }
 
+resource "azurerm_container_app_environment_managed_certificate" "test" {
+  name                         = "acctest-mcert%[2]d"
+  container_app_environment_id = azurerm_container_app_environment.test.id
+  subject_name                 = trimprefix(azurerm_dns_txt_record.test.fqdn, "asuid.")
 
-`, r.template(data))
+  depends_on = [azurerm_container_app_custom_domain.setup]
+}
+
+resource "azurerm_container_app_custom_domain" "test" {
+  name                                             = trimprefix(azurerm_dns_txt_record.test.fqdn, "asuid.")
+  container_app_id                                 = azurerm_container_app.test.id
+  container_app_environment_managed_certificate_id = azurerm_container_app_environment_managed_certificate.test.id
+  certificate_binding_type                         = "SniEnabled"
+}
+
+
+`, r.template(data), data.RandomInteger)
 }
 
 func (r ContainerAppCustomDomainResource) multiple(data acceptance.TestData) string {

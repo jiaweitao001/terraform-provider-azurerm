@@ -53,11 +53,21 @@ func (a ContainerAppCustomDomainResource) Arguments() map[string]*pluginsdk.Sche
 		},
 
 		"container_app_environment_certificate_id": {
-			Type:         pluginsdk.TypeString,
-			Optional:     true,
-			ForceNew:     true,
-			RequiredWith: []string{"certificate_binding_type"},
-			ValidateFunc: managedenvironments.ValidateCertificateID,
+			Type:          pluginsdk.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			RequiredWith:  []string{"certificate_binding_type"},
+			ConflictsWith: []string{"container_app_environment_managed_certificate_id"},
+			ValidateFunc:  managedenvironments.ValidateCertificateID,
+		},
+
+		"container_app_environment_managed_certificate_id": {
+			Type:          pluginsdk.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			RequiredWith:  []string{"certificate_binding_type"},
+			ConflictsWith: []string{"container_app_environment_certificate_id"},
+			ValidateFunc:  managedenvironments.ValidateManagedCertificateID,
 		},
 
 		"certificate_binding_type": {
@@ -71,12 +81,7 @@ func (a ContainerAppCustomDomainResource) Arguments() map[string]*pluginsdk.Sche
 }
 
 func (a ContainerAppCustomDomainResource) Attributes() map[string]*pluginsdk.Schema {
-	return map[string]*pluginsdk.Schema{
-		"container_app_environment_managed_certificate_id": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-	}
+	return map[string]*pluginsdk.Schema{}
 }
 
 func (a ContainerAppCustomDomainResource) ModelObject() interface{} {
@@ -167,6 +172,15 @@ func (a ContainerAppCustomDomainResource) Create() sdk.ResourceFunc {
 			if certificateId != nil {
 				customDomain.CertificateId = pointer.To(certificateId.ID())
 				customDomain.BindingType = pointer.To(containerapps.BindingType(model.BindingType))
+			}
+
+			if model.ManagedCertificateId != "" {
+				managedCertId, err := managedenvironments.ParseManagedCertificateID(model.ManagedCertificateId)
+				if err != nil {
+					return err
+				}
+				customDomain.CertificateId = pointer.To(managedCertId.ID())
+				customDomain.BindingType = pointer.ToEnum[containerapps.BindingType](model.BindingType)
 			}
 
 			customDomains = append(customDomains, customDomain)
